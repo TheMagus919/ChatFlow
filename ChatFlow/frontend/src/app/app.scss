@@ -1,0 +1,210 @@
+/*// Dark Mode
+.dark-mode {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  .card { background: #2d2d2d; color: #ffffff; }
+  .sidebar { background: #1a1a1a; }
+}
+
+// Animations
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.page-enter { animation: fadeIn 0.3s; }
+
+// Responsive
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.show { transform: translateX(0); }
+}*//*
+.main {
+  // Layout principal
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  
+  // Fondo degradado moderno
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  
+  // Flexbox para centrar contenido
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  
+  // Efectos visuales
+  overflow-x: hidden;
+  
+  // Animación de entrada suave
+  animation: fadeIn 0.6s ease-out;
+  
+  // Scroll suave
+  scroll-behavior: smooth;
+}
+
+// Animación de entrada
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Estilos para router-outlet y sus hijos
+:host ::ng-deep {
+  // Contenedor principal del contenido
+  .router-outlet-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 2rem;
+    
+    // Responsive
+    @media (max-width: 768px) {
+      margin: 1rem;
+      padding: 1.5rem;
+    }
+    
+    @media (max-width: 480px) {
+      margin: 0.5rem;
+      padding: 1rem;
+    }
+  }
+  
+  // Cards/contenido típico de Angular
+  .mat-mdc-card,
+  .card,
+  .content-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    box-shadow: 
+      0 20px 40px rgba(0, 0, 0, 0.1),
+      0 0 0 1px rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &:hover {
+      transform: translateY(-8px);
+      box-shadow: 
+        0 30px 60px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(255, 255, 255, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+      padding: 2rem;
+      border-radius: 20px;
+    }
+    
+    @media (max-width: 480px) {
+      padding: 1.5rem;
+      border-radius: 16px;
+    }
+  }
+  
+  // Títulos
+  h1, h2, h3, h4, h5, h6 {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+  }
+  
+  // Botones mejorados
+  button {
+    border-radius: 12px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+  }
+  
+  // Formularios
+  .mat-mdc-form-field,
+  input, 
+  textarea,
+  select {
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    
+    &:focus {
+      border-color: #667eea !important;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    }
+  }
+  
+  // Tablas responsive
+  table {
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    
+    th {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 1.25rem 1rem;
+      font-weight: 600;
+    }
+    
+    td {
+      padding: 1.25rem 1rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    tr:hover {
+      background: rgba(102, 126, 234, 0.05);
+    }
+  }
+  
+  // Responsive tables
+  @media (max-width: 768px) {
+    .mat-mdc-table-container {
+      overflow-x: auto;
+    }
+  }
+}
+
+// Modo oscuro (opcional)
+@media (prefers-color-scheme: dark) {
+  .main {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+  }
+  
+  :host ::ng-deep {
+    .mat-mdc-card,
+    .card {
+      background: rgba(30, 30, 46, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
+  }
+}
+
+// Loading spinner (si usas Angular Material)
+:host ::ng-deep {
+  .mat-mdc-progress-spinner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+  }
+}*/

@@ -1,0 +1,114 @@
+<div class="app-wrapper" [class.dark-mode]="isDarkMode">
+  <!-- Topbar -->
+  <nav class="navbar navbar-expand sticky-top">
+    <div class="container-fluid">
+      <!-- Sidebar Toggle -->
+      <button class="navbar-toggler" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      
+      <!-- Right -->
+      <div class="navbar-nav ms-auto">
+        <!-- Dark Mode Toggle -->
+        <button class="btn btn-outline-secondary me-2" (click)="toggleDarkMode()">
+          <i class="fas" [class.fa-sun]="!isDarkMode" [class.fa-moon]="isDarkMode"></i>
+        </button>
+        
+        <div class="dropdown">
+          <a class="dropdown-toggle d-flex align-items-center p-2" 
+            href="#" 
+            role="button" 
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
+            
+            <!-- Avatar con fallback -->
+            <img [src]="'assets/images/default-avatar.png'" 
+                [alt]="(user$ | async)?.name || 'User'"
+                class="rounded-circle me-2 shadow-sm"
+                width="40" height="40"
+                loading="lazy">
+            
+            <!-- Nombre seguro -->
+            <div class="d-flex flex-column text-start me-2">
+              <span class="fw-bold">{{ (user$ | async)?.name || 'Usuario' }}</span>
+              <small class="text-muted">{{ (user$ | async)?.email || '' }}</small>
+            </div>
+            
+            <!-- Icono dropdown -->
+            <i class="fas fa-chevron-down ms-auto"></i>
+          </a>
+          
+          <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li>
+              <a class="dropdown-item" routerLink="/profile">
+                <i class="fas fa-user me-2"></i>Perfil
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" routerLink="/pricing">
+                <i class="fas fa-credit-card me-2"></i>Suscripción
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item text-danger" (click)="logout($event)">
+                <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="!isSidebarOpen">
+    <nav class="nav flex-column">
+      <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">
+        <i class="fas fa-chart-line me-2"></i> Dashboard
+      </a>
+      <a routerLink="/customers" routerLinkActive="active" class="nav-link">
+        <i class="fas fa-users me-2"></i> Clientes
+      </a>
+      <a routerLink="/kanban" routerLinkActive="active" class="nav-link">
+        <i class="fas fa-columns me-2"></i> Pipeline
+      </a>
+      <a routerLink="/chat" routerLinkActive="active" class="nav-link">
+        <i class="fab fa-whatsapp me-2"></i> WhatsApp
+      </a>
+      <a routerLink="/pricing" routerLinkActive="active" class="nav-link">
+        <i class="fas fa-credit-card me-2"></i> Suscripción
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <app-loading-spinner></app-loading-spinner>
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- src/app/layouts/main-layout/main-layout.component.html -->
+  <!-- Toasts Container -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3 gap-2 z-3">
+    <div *ngFor="let toast of toastService.toasts$ | async; trackBy: trackByToastId" 
+        class="toast shadow-lg border-0 rounded-3"
+        [ngClass]="{
+          'bg-success text-white': toast.type === 'success',
+          'bg-danger text-white': toast.type === 'error', 
+          'bg-info text-white': toast.type === 'info',
+          'bg-warning text-dark': toast.type === 'warning'
+        }">
+      
+      <div class="d-flex">
+        <div class="toast-body p-3">
+          {{ toast.message }}
+        </div>
+        <button type="button" 
+                class="btn-close btn-close-white me-2 m-auto"
+                (click)="toastService.remove(toast.id)"
+                aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+</div>

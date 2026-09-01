@@ -1,0 +1,204 @@
+<div class="pricing-page">
+
+  <!-- HERO -->
+  <section class="pricing-hero">
+
+    <div class="hero-content">
+
+      <div class="hero-text">
+
+        <h1>
+          Convertí tus chats
+          en ventas
+        </h1>
+
+        <p>
+          Organizá tus clientes y aumentá
+          tus ventas desde un solo lugar.
+        </p>
+
+        <button routerLink="/register" class="hero-button">
+          Probar Gratis
+        </button>
+
+      </div>
+
+      <div class="hero-image">
+
+        <div class="dashboard-preview">
+
+          <div class="preview-topbar">
+
+            <div class="dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+
+          </div>
+
+          <div class="preview-body">
+
+            <div class="preview-sidebar"></div>
+
+            <div class="preview-content">
+
+              <div class="preview-cards">
+
+                <div class="mini-card"></div>
+                <div class="mini-card"></div>
+                <div class="mini-card"></div>
+
+              </div>
+
+              <div class="mini-chart"></div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="wave"></div>
+
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features">
+
+    <div class="feature-item">
+      💬
+      <span>Chats desordenados</span>
+    </div>
+
+    <div class="feature-item">
+      👥
+      <span>Clientes olvidados</span>
+    </div>
+
+    <div class="feature-item">
+      💰
+      <span>Ventas perdidas</span>
+    </div>
+
+  </section>
+
+  <!-- TITLE -->
+  <section class="pricing-title">
+
+    <h2>Todo en un solo lugar</h2>
+
+  </section>
+
+  <!-- CARDS -->
+  <section class="pricing-cards">
+
+    <!-- FREE -->
+    <div class="pricing-card">
+
+      <h3>Gratis</h3>
+
+      <div class="price">
+
+        $0
+
+        <span>/mes</span>
+
+      </div>
+
+      <ul>
+
+        <li>✔ 10 clientes</li>
+        <li>✔ Chat básico</li>
+        <li>✔ Pipeline simple</li>
+
+      </ul>
+
+      <button
+        class="plan-button secondary"
+        [disabled]="currentPlan.plan === 'free'"
+      >
+
+        {{
+          currentPlan.plan === 'free'
+            ? 'Plan Actual'
+            : 'Comenzar'
+        }}
+
+      </button>
+
+    </div>
+
+    <!-- STARTER -->
+    <div class="pricing-card featured">
+
+      <div class="popular-badge">
+        ★ MÁS POPULAR
+      </div>
+
+      <h3>Pro</h3>
+
+      <div class="price">
+
+        $1499
+
+        <span>/mes</span>
+
+      </div>
+
+      <ul>
+
+        <li>✔ 100 clientes</li>
+        <li>✔ Dashboard completo</li>
+        <li>✔ Estadísticas</li>
+        <li>✔ Tags avanzados</li>
+
+      </ul>
+
+      <button
+        class="plan-button primary"
+        (click)="createCheckout(plans[1]?.id)"
+      >
+        Comenzar
+      </button>
+
+    </div>
+
+    <!-- BUSINESS -->
+    <div class="pricing-card">
+
+      <h3>Negocio</h3>
+
+      <div class="price">
+
+        $2999
+
+        <span>/mes</span>
+
+      </div>
+
+      <ul>
+
+        <li>✔ Clientes ilimitados</li>
+        <li>✔ WhatsApp API</li>
+        <li>✔ Automatizaciones</li>
+        <li>✔ Soporte prioritario</li>
+
+      </ul>
+
+      <button
+        class="plan-button primary"
+        (click)="createCheckout(plans[2]?.id)"
+      >
+        Comenzar
+      </button>
+
+    </div>
+
+  </section>
+
+</div>

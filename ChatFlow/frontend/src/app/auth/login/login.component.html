@@ -1,0 +1,75 @@
+<div class="login-container">
+
+  <div class="background-shapes"></div>
+
+  <div class="login-card">
+
+    <div class="logo-section">
+      <div class="logo-icon">
+        <img [src]="'chatflowicono.png'" alt="ChatFlow Logo" class="logo-icon">
+      </div>
+
+      <h1>ChatFlow</h1>
+    </div>
+
+    <form
+      [formGroup]="loginForm"
+      (ngSubmit)="onSubmit(); $event.preventDefault()"
+      class="login-form"
+    >
+
+      <div class="form-group">
+        <label>Email</label>
+
+        <input
+          type="email"
+          formControlName="email"
+          placeholder="mapa.cooh@gmail.com"
+          class="form-input"
+          [class.error]="email?.invalid && email?.touched"
+        >
+      </div>
+
+      <div class="form-group">
+
+        <label>Contraseña</label>
+
+        <div class="password-wrapper">
+
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            formControlName="password"
+            class="form-input password-input"
+          >
+
+          <button
+            type="button"
+            class="toggle-password"
+            (click)="togglePassword()"
+          >
+            {{ showPassword ? '🙈' : '👁️' }}
+          </button>
+
+        </div>
+      </div>
+      <button
+        type="submit"
+        class="login-button"
+        [disabled]="loading"
+      >
+        {{ loading ? 'Ingresando...' : 'Ingresar' }}
+      </button>
+
+    </form>
+
+    <div class="register-link">
+      <span>¿No tienes cuenta?</span>
+
+      <a routerLink="/register">
+        Regístrate
+      </a>
+    </div>
+
+  </div>
+
+</div>

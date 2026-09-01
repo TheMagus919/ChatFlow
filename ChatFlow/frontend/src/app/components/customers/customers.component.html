@@ -1,0 +1,374 @@
+<div class="page-container">
+
+  <!-- MENU IZQUIERDO -->
+  <aside class="sidebar">
+
+    <div class="logo">
+
+      <div class="logo-icon">
+        <img [src]="'chatflowicono.png'" alt="ChatFlow Logo" class="logo-image">
+      </div>
+
+      <span>ChatFlow</span>
+
+    </div>
+
+    <nav class="menu">
+
+      <a routerLink="/pipeline" class="menu-item">
+        <img [src]="'menu.png'" alt="Menu Principal" class="menu-icon">Menu Principal
+      </a>
+
+      <a routerLink="/customers" class="menu-item active">
+        <img [src]="'clientesSeleccionado.png'" alt="Clientes" class="menu-icon">Clientes
+      </a>
+
+      <a routerLink="/stats" class="menu-item">
+        <img [src]="'estadisticas.png'" alt="Estadisticas" class="menu-icon">Estadisticas
+      </a>
+
+      <a routerLink="/conversations" class="menu-item">
+        <img [src]="'chat.png'" alt="Chats" class="menu-icon">Chats
+      </a>
+
+      <a routerLink="/pricing" class="menu-item">
+        <img [src]="'planes.png'" alt="Planes" class="menu-icon">Planes
+      </a>
+
+      <a
+        href="#"
+        class="menu-item"
+        (click)="openLogoutModal(); $event.preventDefault()"
+      >
+        <img [src]="'salir.png'" alt="Cerrar sesión" class="menu-icon">
+        Cerrar sesión
+      </a>
+    </nav>
+
+  </aside>
+  <!-- modal -->
+  <div
+      class="logout-overlay"
+      *ngIf="showLogoutModal"
+    >
+
+      <div class="logout-modal">
+
+        <div class="logout-header">
+
+          <h3>
+            Cerrar sesión
+          </h3>
+
+        </div>
+
+        <div class="logout-body">
+
+          ¿Estás seguro que deseas cerrar la sesión?
+
+        </div>
+
+        <div class="logout-footer">
+
+          <button
+            class="cancel-btn"
+            (click)="closeLogoutModal()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            class="confirm-btn"
+            (click)="confirmLogout()"
+          >
+            Cerrar sesión
+          </button>
+
+        </div>
+
+      </div>
+
+  </div>
+  <div class="content">
+    <!-- TOP NAVBAR -->
+    <div class="dashboard-navbar">
+
+      <div class="navbar-left">
+      </div>
+
+      <div class="navbar-right">
+
+        <!-- NOTIFICACIONES -->
+        <div #notificationsContainer class="notification-wrapper">
+
+          <button
+            class="notification-btn"
+            (click)="toggleNotifications(); $event.stopPropagation()"
+          >
+
+            <span class="notification-icon">
+              🔔
+            </span>
+
+            <span
+              *ngIf="unreadNotifications > 0"
+              class="notification-badge"
+            >
+              {{ unreadNotifications }}
+            </span>
+
+          </button>
+
+          <div
+            *ngIf="showNotifications"
+            class="notifications-dropdown"
+            (click)="$event.stopPropagation()"
+          >
+
+            <div class="notifications-header">
+
+              <h3>Notificaciones</h3>
+
+              <button
+                class="mark-read-btn"
+                (click)="markAllNotificationsRead()"
+              >
+                Marcar todas
+              </button>
+
+            </div>
+
+            <div
+              class="notifications-list"
+              *ngIf="notifications.length > 0"
+            >
+
+              <div
+                *ngFor="let notification of notifications"
+                class="notification-item"
+                [class.unread]="!notification.is_read"
+                (click)="openNotification(notification)"
+              >
+
+                <div class="notification-avatar">
+                  🔔
+                </div>
+
+                <div class="notification-content">
+
+                  <div class="notification-title">
+                    {{ notification.title }}
+                  </div>
+
+                  <div class="notification-message">
+                    {{ notification.message }}
+                  </div>
+
+                  <div class="notification-time">
+                    {{ notification.created_at | date:'dd/MM HH:mm' }}
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div
+              *ngIf="notifications.length === 0"
+              class="empty-notifications"
+            >
+
+              No tienes notificaciones
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- PERFIL -->
+        <button
+          class="user-profile"
+          (click)="openProfileModal()"
+        >
+
+          <div class="avatar-circle">
+
+            {{ userInitials }}
+
+          </div>
+
+          <span>
+            {{ currentUser.email }}
+          </span>
+
+        </button>
+
+      </div>
+
+    </div>
+    <div class="page-header">
+
+      <h2>Clientes</h2>
+
+      <div class="filters">
+
+        <div class="search-box">
+
+          <i class="bi bi-search"></i>
+
+          <input
+            type="text"
+            [(ngModel)]="search"
+            (keyup)="loadCustomers()"
+            placeholder="Buscar por nombre o teléfono..."
+          >
+
+        </div>
+
+        <select
+          [(ngModel)]="selectedStatus"
+          (change)="loadCustomers()"
+        >
+
+          <option value="all">
+            Todos
+          </option>
+
+          <option value="new">
+            Nuevos
+          </option>
+
+          <option value="in_conversation">
+            En conversación
+          </option>
+
+          <option value="won">
+            Ganados
+          </option>
+
+          <option value="lost">
+            Perdidos
+          </option>
+
+          <option value="closed">
+            Cerrados
+          </option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+    <div class="customer-table">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>Nombre</th>
+
+            <th>Teléfono</th>
+
+            <th>Estado</th>
+
+            <th>Creado</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          <tr
+            *ngFor="
+              let customer
+              of customers
+            "
+          >
+
+            <td>
+              {{ customer.name }}
+            </td>
+
+            <td>
+              {{ customer.phone }}
+            </td>
+
+            <td>
+
+              <span
+                class="status"
+                [ngClass]="customer.status"
+              >
+                {{ getStatusLabel(customer.status) }}
+              </span>
+
+            </td>
+
+            <td>
+              {{
+                customer.created_at
+                | date:'dd/MM/yyyy'
+              }}
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
+<!-- MODAL PERFIL -->
+<div
+  class="profile-overlay"
+  *ngIf="showProfileModal"
+>
+
+  <div class="profile-modal">
+
+    <div class="profile-header">
+
+      <h2>
+        Mi Perfil
+      </h2>
+
+    </div>
+
+    <div class="profile-content">
+
+      <p>
+        <strong>Nombre:</strong>
+        {{ currentUser.name }}
+      </p>
+
+      <p>
+        <strong>Email:</strong>
+        {{ currentUser.email }}
+      </p>
+
+    </div>
+
+    <div class="profile-footer">
+
+      <button
+        class="cancel-btn"
+        (click)="closeProfileModal()"
+      >
+        Cerrar
+      </button>
+
+    </div>
+
+  </div>
+
+</div>

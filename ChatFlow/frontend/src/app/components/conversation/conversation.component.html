@@ -1,0 +1,386 @@
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="logo">
+
+      <div class="logo-icon">
+        <img [src]="'chatflowicono.png'" alt="ChatFlow Logo" class="logo-image">
+      </div>
+
+      <span>ChatFlow</span>
+
+    </div>
+
+    <nav class="menu">
+
+      <a routerLink="/pipeline" class="menu-item">
+        <img [src]="'menu.png'" alt="Menu Principal" class="menu-icon">Menu Principal
+      </a>
+
+      <a routerLink="/customers" class="menu-item">
+        <img [src]="'clientes.png'" alt="Clientes" class="menu-icon">Clientes
+      </a>
+
+      <a routerLink="/stats" class="menu-item">
+        <img [src]="'estadisticas.png'" alt="Estadisticas" class="menu-icon">Estadisticas
+      </a>
+
+      <a routerLink="/conversations" class="menu-item  active">
+        <img [src]="'chatSeleccionado.png'" alt="Chats" class="menu-icon">Chats
+      </a>
+
+      <a routerLink="/pricing" class="menu-item">
+        <img [src]="'planes.png'" alt="Planes" class="menu-icon">Planes
+      </a>
+
+      <a
+        href="#"
+        class="menu-item"
+        (click)="openLogoutModal(); $event.preventDefault()"
+      >
+        <img [src]="'salir.png'" alt="Cerrar sesión" class="menu-icon">
+        Cerrar sesión
+      </a>
+    </nav>
+
+  </aside>
+  <!-- modal -->
+   <div
+      class="logout-overlay"
+      *ngIf="showLogoutModal"
+    >
+
+      <div class="logout-modal">
+
+        <div class="logout-header">
+
+          <h3>
+            Cerrar sesión
+          </h3>
+
+        </div>
+
+        <div class="logout-body">
+
+          ¿Estás seguro que deseas cerrar la sesión?
+
+        </div>
+
+        <div class="logout-footer">
+
+          <button
+            class="cancel-btn"
+            (click)="closeLogoutModal()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            class="confirm-btn"
+            (click)="confirmLogout()"
+          >
+            Cerrar sesión
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+  <!-- CHAT LIST -->
+  <aside class="chat-list">
+
+    <div class="chat-list-header">
+
+      <div class="header-top">
+
+        <h2>Chats</h2>
+
+        <button
+          class="archive-toggle"
+          (click)="toggleArchived()"
+        >
+          {{ showArchived ? 'Ver Activos' : 'Ver Archivados' }}
+        </button>
+
+      </div>
+
+      <div class="chat-search">
+
+        <span class="search-icon">
+          🔍
+        </span>
+
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Buscar nombre o teléfono..."
+        >
+
+      </div>
+
+    </div>
+
+    <div
+      *ngFor="
+        let conversation of filteredConversations;
+      "
+      class="chat-item"
+      [class.active]="
+        selectedConversation?.id ===
+        conversation.id
+      "
+      (click)="selectConversation(conversation)"
+    >
+
+      <img
+        [src]="conversation.customer.avatar || 'default-avatar.png'"
+        class="avatar"
+      >
+
+      <div class="chat-info">
+
+        <div class="top-row">
+
+          <h4>
+            {{ conversation.customer.name }}
+          </h4>
+
+        </div>
+
+        <p>
+          {{
+            conversation.last_message ||
+            'Sin mensajes'
+          }}
+        </p>
+
+      </div>
+
+    </div>
+
+  </aside>
+
+  <!-- CHAT -->
+  <section class="chat-window">
+
+    <ng-container *ngIf="selectedConversation">
+
+      <!-- HEADER -->
+      <div class="chat-header">
+
+        <div class="user-info">
+
+          <img
+            [src]="selectedConversation.customer.avatar || 'default-avatar.png'"
+            class="avatar-lg"
+          >
+
+          <div>
+
+            <h2>
+              {{
+                selectedConversation.customer.name
+              }}
+            </h2>
+
+            <span>
+              {{
+                selectedConversation.customer.phone
+              }}
+            </span>
+            <div class="customer-tags">
+
+              <span
+                *ngFor="let customerTag of selectedConversation.customer.customerTags"
+                class="tag-badge"
+                [style.background]="customerTag.tag.color"
+              >
+                {{ customerTag.tag.name }}
+              </span>
+
+            </div>
+          </div>
+
+        </div>
+        <div class="header-actions">
+          <button
+            class="menu-button"
+            (click)="showMenu = !showMenu"
+          >
+            ⋮
+          </button>
+
+          <div
+            class="dropdown-menu"
+            *ngIf="showMenu"
+          >
+
+            <div class="menu-title">
+              Cambiar estado
+            </div>
+
+            <div
+              class="menu-option"
+              (click)="changeStatus('won')"
+            >
+              ✅ Vendido
+            </div>
+
+            <div
+              class="menu-option"
+              (click)="changeStatus('closed')"
+            >
+              📁 Cerrado
+            </div>
+
+            <div
+              class="menu-option"
+              (click)="changeStatus('lost')"
+            >
+              ❌ Perdido
+            </div>
+
+            <div class="menu-divider"></div>
+
+            <div
+              class="menu-option"
+              (click)="openTagsModal()"
+            >
+              🏷️ Administrar tags
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+        <!-- MENSAJES -->
+        <div #messagesContainer class="messages-container">
+          <ng-container
+            *ngFor="
+              let message of messages;
+              let i = index;
+              trackBy: trackByMessage
+            "
+          >
+
+            <div
+              *ngIf="shouldShowDateSeparator(i)"
+              class="date-separator"
+            >
+              <span>
+                {{ getDateLabel(message.created_at) }}
+              </span>
+            </div>
+
+            <div
+              class="message"
+              [ngClass]="{
+                mine: message.direction === 'outgoing'
+              }"
+            >
+              <div class="bubble">
+
+                <p>{{ message.content }}</p>
+
+                <div class="message-meta">
+
+                  <span class="time">
+                    {{ message.created_at | date:'shortTime' }}
+                  </span>
+
+                  <span
+                    *ngIf="message.direction === 'outgoing'"
+                    class="message-status"
+                    [ngClass]="getMessageStatus(message)"
+                  >
+                    <ng-container [ngSwitch]="getMessageStatus(message)">
+                      <span *ngSwitchCase="'sent'">✓</span>
+                      <span *ngSwitchCase="'delivered'">✓✓</span>
+                      <span *ngSwitchCase="'read'">✓✓</span>
+                    </ng-container>
+                  </span>
+
+                </div>
+
+              </div>
+            </div>
+
+          </ng-container>
+
+        </div>
+      
+
+      <!-- INPUT -->
+      <div class="message-input">
+
+        <input
+          type="text"
+          [(ngModel)]="newMessage"
+          (keyup.enter)="sendMessage()"
+          placeholder="Type a message..."
+        >
+
+        <button (click)="sendMessage()">
+          Send
+        </button>
+
+      </div>
+    </ng-container>
+  </section>
+  <div
+    class="modal-backdrop"
+    *ngIf="showTagsModal"
+  >
+
+    <div class="tags-modal">
+
+      <h2>
+        Administrar Tags
+      </h2>
+
+      <div class="tags-list">
+
+        <div
+          *ngFor="let tag of availableTags"
+          class="tag-item"
+        >
+
+          <label>
+
+            <input
+              type="checkbox"
+              [checked]="customerTags.includes(tag.id)"
+              (change)="toggleTag(tag.id)"
+            >
+
+            <span
+              class="tag-preview"
+              [style.background]="tag.color"
+            >
+              {{ tag.name }}
+            </span>
+
+          </label>
+
+        </div>
+
+      </div>
+
+      <div class="modal-actions">
+
+        <button
+          class="save-btn"
+          (click)="showTagsModal = false"
+        >
+          Cerrar
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
