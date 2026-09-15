@@ -7,7 +7,7 @@ import { Tag } from '../models/Tag';
 interface AuthRequest extends Request {
   user?: {
     userId: number;
-    id: number;     // keep original id if needed
+    id: number;     
     email: string;
   };
 }
@@ -109,7 +109,8 @@ export class TagsController {
   async getById(req: Request, res: Response) {
     try {
       const id = req.params.id as string;
-      const tag = await this.customerTagService.findTagsByCustomer(id);
+      const userId = (req as any).user?.userId;
+      const tag = await this.customerTagService.findTagsByCustomer(id, String(userId));
       res.json({ success: true, data: tag });
     } catch (error: any) {
       res.status(500).json({ error: error.message });

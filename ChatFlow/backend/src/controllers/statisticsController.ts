@@ -1,32 +1,39 @@
 import { Request, Response } from 'express';
 import * as statisticsService from '../services/statisticsService';
 
+interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: number;
+    email: string;
+  };
+}
+
 export const getDashboardStats = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
-) => {
+): Promise<void> => {
 
   try {
 
-    const userId =
-      (req as any).user?.userId;
-    console.log(userId);
-    console.log('USER ID:', (req as any).user.id);
-    const data =
-      await statisticsService.getDashboardStats(
-        userId
-      );
+    if (!req.user?.userId) {
+      res.status(401).json({
+        error: 'Usuario no autenticado'
+      });
+      return;
+    }
 
-    return res.json(data);
+    const data = await statisticsService.getDashboardStats(
+      req.user.userId
+    );
+
+    res.json(data);
 
   } catch (error) {
 
-    console.error(error);
+    console.error('Error loading statistics:', error);
 
-    return res.status(500).json({
+    res.status(500).json({
       error: 'Error loading statistics'
     });
-
   }
-
 };

@@ -1,77 +1,79 @@
 import pool from '../config/database';
 
-export const getDashboardStats =
-async (userId: number) => {
+interface DashboardStats {
+  totalCustomers: number;
+  newCustomers: number;
+  inConversation: number;
+  wonCustomers: number;
+  lostCustomers: number;
+  closedCustomers: number;
+  conversionRate: number;
+  customers: Array<{
+    status: string;
+    created_at: Date;
+    updated_at: Date;
+  }>;
+}
 
-  const [customers]: any =
-    await pool.query(
-      `
-      SELECT
-        status,
-        created_at,
-        updated_at
-      FROM customers
-      WHERE user_id = ?
-      `,
-      [userId]
-    );
+export const getDashboardStats = async (
+  userId: number
+): Promise<DashboardStats> => {
 
-  const totalCustomers =
-    customers.length;
+  const [customers] = await pool.query(
+    `
+    SELECT
+      status,
+      created_at,
+      updated_at
+    FROM customers
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+    `,
+    [userId]
+  ) as [
+    Array<{
+      status: string;
+      created_at: Date;
+      updated_at: Date;
+    }>,
+    unknown
+  ];
 
-  const newCustomers =
-    customers.filter(
-      (c: any) => c.status === 'new'
-    ).length;
+  const totalCustomers = customers.length;
 
-  const inConversation =
-    customers.filter(
-      (c: any) =>
-        c.status === 'in_conversation'
-    ).length;
+  const newCustomers = customers.filter(
+    customer => customer.status === 'new'
+  ).length;
 
-  const wonCustomers =
-    customers.filter(
-      (c: any) => c.status === 'won'
-    ).length;
+  const inConversation = customers.filter(
+    customer => customer.status === 'in_conversation'
+  ).length;
 
-  const lostCustomers =
-    customers.filter(
-      (c: any) => c.status === 'lost'
-    ).length;
+  const wonCustomers = customers.filter(
+    customer => customer.status === 'won'
+  ).length;
 
-  const closedCustomers =
-    customers.filter(
-      (c: any) => c.status === 'closed'
-    ).length;
-  console.log(customers);
+  const lostCustomers = customers.filter(
+    customer => customer.status === 'lost'
+  ).length;
+
+  const closedCustomers = customers.filter(
+    customer => customer.status === 'closed'
+  ).length;
+
+  const conversionRate =
+    totalCustomers > 0
+      ? Number(((wonCustomers / totalCustomers) * 100).toFixed(2))
+      : 0;
+
   return {
-
     totalCustomers,
-
     newCustomers,
-
     inConversation,
-
     wonCustomers,
-
     lostCustomers,
-
     closedCustomers,
-
-    conversionRate:
-
-      totalCustomers > 0
-
-        ? (
-            wonCustomers /
-            totalCustomers
-          ) * 100
-
-        : 0,
-
+    conversionRate,
     customers
-
   };
-
 };
