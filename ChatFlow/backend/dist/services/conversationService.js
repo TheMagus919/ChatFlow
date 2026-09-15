@@ -1,11 +1,12 @@
-import pool from '../config/database';
-
-export const getConversations = async (
-  userId: number
-) => {
-
-  const [rows]: any = await pool.query(
-    `
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createConversation = exports.getConversationById = exports.getConversations = void 0;
+const database_1 = __importDefault(require("../config/database"));
+const getConversations = async (userId) => {
+    const [rows] = await database_1.default.query(`
     SELECT
       c.id,
       c.customer_id,
@@ -29,40 +30,29 @@ export const getConversations = async (
     ORDER BY
       c.last_message_at DESC,
       c.id DESC
-    `,
-    [userId]
-  );
-
-  return rows.map((row: any) => ({
-    id: row.id,
-    customerId: row.customer_id,
-    userId: row.users_id,
-
-    last_message: row.last_message,
-    last_message_at: row.last_message_at,
-
-    customer: {
-      id: row.customerIdData,
-      name: row.name,
-      phone: row.phone,
-      status: row.status,
-      avatar: row.avatar
-    }
-  }));
+    `, [userId]);
+    return rows.map((row) => ({
+        id: row.id,
+        customerId: row.customer_id,
+        userId: row.users_id,
+        last_message: row.last_message,
+        last_message_at: row.last_message_at,
+        customer: {
+            id: row.customerIdData,
+            name: row.name,
+            phone: row.phone,
+            status: row.status,
+            avatar: row.avatar
+        }
+    }));
 };
-
-
+exports.getConversations = getConversations;
 /**
  * Obtiene una conversación únicamente
  * si pertenece al usuario autenticado.
  */
-export const getConversationById = async (
-  conversationId: number,
-  userId: number
-) => {
-
-  const [rows]: any = await pool.query(
-    `
+const getConversationById = async (conversationId, userId) => {
+    const [rows] = await database_1.default.query(`
     SELECT
       c.id,
       c.customer_id,
@@ -86,76 +76,53 @@ export const getConversationById = async (
       AND c.users_id = ?
 
     LIMIT 1
-    `,
-    [
-      conversationId,
-      userId
-    ]
-  );
-
-  if (!rows.length) {
-    return null;
-  }
-
-  const row = rows[0];
-
-  return {
-    id: row.id,
-    customerId: row.customer_id,
-    userId: row.users_id,
-
-    last_message: row.last_message,
-    last_message_at: row.last_message_at,
-
-    customer: {
-      id: row.customerIdData,
-      name: row.name,
-      phone: row.phone,
-      status: row.status,
-      avatar: row.avatar
+    `, [
+        conversationId,
+        userId
+    ]);
+    if (!rows.length) {
+        return null;
     }
-  };
+    const row = rows[0];
+    return {
+        id: row.id,
+        customerId: row.customer_id,
+        userId: row.users_id,
+        last_message: row.last_message,
+        last_message_at: row.last_message_at,
+        customer: {
+            id: row.customerIdData,
+            name: row.name,
+            phone: row.phone,
+            status: row.status,
+            avatar: row.avatar
+        }
+    };
 };
-
-
-export const createConversation = async ({
-  customerId,
-  userId
-}: {
-  customerId: number;
-  userId: number;
-}) => {
-
-  /*
-   * Primero verificamos que el cliente
-   * pertenezca al usuario autenticado.
-   */
-  const [customerRows]: any = await pool.query(
-    `
+exports.getConversationById = getConversationById;
+const createConversation = async ({ customerId, userId }) => {
+    /*
+     * Primero verificamos que el cliente
+     * pertenezca al usuario autenticado.
+     */
+    const [customerRows] = await database_1.default.query(`
     SELECT id
     FROM customers
     WHERE
       id = ?
       AND user_id = ?
     LIMIT 1
-    `,
-    [
-      customerId,
-      userId
-    ]
-  );
-
-  if (!customerRows.length) {
-    throw new Error(
-      'El cliente no pertenece al usuario autenticado'
-    );
-  }
-
-  /*
-   * Buscamos si ya existe la conversación.
-   */
-  const [existingRows]: any = await pool.query(
-    `
+    `, [
+        customerId,
+        userId
+    ]);
+    if (!customerRows.length) {
+        throw new Error('El cliente no pertenece al usuario autenticado');
+    }
+    /*
+     * Buscamos si ya existe la conversación.
+     */
+    const [existingRows] = await database_1.default.query(`
     SELECT
       c.id,
       c.customer_id,
@@ -179,61 +146,44 @@ export const createConversation = async ({
       AND c.users_id = ?
 
     LIMIT 1
-    `,
-    [
-      customerId,
-      userId
-    ]
-  );
-
-  if (existingRows.length > 0) {
-
-    const row = existingRows[0];
-
-    return {
-      id: row.id,
-      customerId: row.customer_id,
-      userId: row.users_id,
-
-      last_message: row.last_message,
-      last_message_at: row.last_message_at,
-
-      customer: {
-        id: row.customerIdData,
-        name: row.name,
-        phone: row.phone,
-        status: row.status,
-        avatar: row.avatar
-      }
-    };
-  }
-
-  /*
-   * Creamos la conversación.
-   */
-  const [result]: any = await pool.query(
-    `
+    `, [
+        customerId,
+        userId
+    ]);
+    if (existingRows.length > 0) {
+        const row = existingRows[0];
+        return {
+            id: row.id,
+            customerId: row.customer_id,
+            userId: row.users_id,
+            last_message: row.last_message,
+            last_message_at: row.last_message_at,
+            customer: {
+                id: row.customerIdData,
+                name: row.name,
+                phone: row.phone,
+                status: row.status,
+                avatar: row.avatar
+            }
+        };
+    }
+    /*
+     * Creamos la conversación.
+     */
+    const [result] = await database_1.default.query(`
     INSERT INTO conversations
     (
       customer_id,
       users_id
     )
     VALUES (?, ?)
-    `,
-    [
-      customerId,
-      userId
-    ]
-  );
-
-  return await getConversationById(
-    result.insertId,
-    userId
-  );
+    `, [
+        customerId,
+        userId
+    ]);
+    return await (0, exports.getConversationById)(result.insertId, userId);
 };
-
-
-
+exports.createConversation = createConversation;
 /*
 export const getConversations = async (
   userId: number
@@ -467,4 +417,4 @@ export const createConversation = async ({
   );
 
 };
-*/
+*/ 

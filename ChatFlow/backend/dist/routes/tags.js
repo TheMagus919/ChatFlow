@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const tagsController_1 = require("../controllers/tagsController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+const tagsController = new tagsController_1.TagsController();
+router.get('/', auth_1.authenticateToken, tagsController.getAll.bind(tagsController));
+router.post('/', auth_1.authenticateToken, tagsController.create.bind(tagsController));
+router.put('/:id', auth_1.authenticateToken, tagsController.update.bind(tagsController));
+router.delete('/:id', auth_1.authenticateToken, tagsController.delete.bind(tagsController));
+router.get('/:tagId/customers', auth_1.authenticateToken, tagsController.getCustomersByTag.bind(tagsController));
+router.get('/popular', auth_1.authenticateToken, tagsController.getPopularTags.bind(tagsController));
+router.get('/:id', auth_1.authenticateToken, tagsController.getById.bind(tagsController));
+exports.default = router;

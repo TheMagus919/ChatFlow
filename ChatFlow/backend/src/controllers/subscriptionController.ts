@@ -307,6 +307,173 @@ export async function createPortalSession(
  * POST /api/subscriptions/webhook
  * Maneja los eventos de Stripe
  */
+export async function handleWebhook(
+  req: AuthRequest,
+  res: Response
+): Promise<void> {
+
+  const signature =
+    req.headers['stripe-signature'] as string;
+
+  const webhookSecret =
+    process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!signature) {
+
+    res.status(400).json({
+      error: 'Falta la firma de Stripe'
+    });
+
+    return;
+  }
+
+  if (!webhookSecret) {
+
+    console.error(
+      '❌ STRIPE_WEBHOOK_SECRET no configurado'
+    );
+
+    res.status(500).json({
+      error: 'Webhook no configurado'
+    });
+
+    return;
+  }
+
+  let event: any;
+
+  try {
+
+    /*
+     * Stripe necesita el body ORIGINAL.
+     *
+     * express.raw() hace que req.body sea un Buffer.
+     */
+    if (!Buffer.isBuffer(req.body)) {
+
+      console.error(
+        '❌ El body del webhook no es un Buffer'
+      );
+
+      res.status(400).json({
+        error: 'Invalid webhook body'
+      });
+
+      return;
+    }
+
+    event =
+      stripeService.verifyWebhookSignature(
+        req.body,
+        signature,
+        webhookSecret
+      );
+
+  } catch (error) {
+
+    console.error(
+      '❌ Firma de webhook inválida:',
+      error
+    );
+
+    res.status(400).json({
+      error: 'Webhook signature verification failed'
+    });
+
+    return;
+  }
+
+
+  console.log(
+    `📥 Evento Stripe recibido: ${event.type}`
+  );
+
+
+  try {
+
+    switch (event.type) {
+
+      case WebhookEventType.CHECKOUT_COMPLETED: {
+
+        const session =
+          event.data.object;
+
+        await handleCheckoutCompleted(
+          session
+        );
+
+        break;
+      }
+
+
+      case WebhookEventType.SUBSCRIPTION_UPDATED: {
+
+        const subscription =
+          event.data.object;
+
+        await handleSubscriptionUpdated(
+          subscription
+        );
+
+        break;
+      }
+
+
+      case WebhookEventType.SUBSCRIPTION_DELETED: {
+
+        const subscription =
+          event.data.object;
+
+        await handleSubscriptionDeleted(
+          subscription
+        );
+
+        break;
+      }
+
+
+      case WebhookEventType.INVOICE_PAYMENT_FAILED: {
+
+        const invoice =
+          event.data.object;
+
+        await handlePaymentFailed(
+          invoice
+        );
+
+        break;
+      }
+
+
+      default:
+
+        console.log(
+          `ℹ️ Evento Stripe no manejado: ${event.type}`
+        );
+
+        break;
+    }
+
+
+    res.status(200).json({
+      received: true
+    });
+
+  } catch (error) {
+
+    console.error(
+      '❌ Error procesando webhook:',
+      error
+    );
+
+    res.status(500).json({
+      error: 'Error processing webhook'
+    });
+
+  }
+
+}
+/* funcion que borrar
 export async function handleWebhook(req: AuthRequest, res: Response): Promise<void> {
   const sig = req.headers['stripe-signature'] as string;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
@@ -371,6 +538,7 @@ export async function handleWebhook(req: AuthRequest, res: Response): Promise<vo
     res.status(500).json({ error: 'Error processing webhook' });
   }
 }
+*/
 
 // ==================== PRIVATE HANDLERS ====================
 

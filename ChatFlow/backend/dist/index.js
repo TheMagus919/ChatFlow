@@ -1,4 +1,5 @@
-import app from './app';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /*
 import dotenv from 'dotenv';
 import { initSocket } from './socket';
@@ -16,4 +17,4 @@ const httpServer = app.listen(PORT, () => {
 });
 
 initSocket(httpServer);
-*/
+*/ 

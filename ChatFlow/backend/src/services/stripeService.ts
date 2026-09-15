@@ -1,10 +1,29 @@
 import Stripe from 'stripe';
 
+const stripeSecretKey =
+  process.env.STRIPE_SECRET_KEY;
+
+if (!stripeSecretKey) {
+
+  throw new Error(
+    'STRIPE_SECRET_KEY no está configurado'
+  );
+
+}
+
+const stripe = new Stripe(
+  stripeSecretKey,
+  {
+    apiVersion: '2026-04-22.dahlia'
+  }
+);
+
+/*
 // Inicializar cliente de Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test', {
   apiVersion: '2026-04-22.dahlia',
 });
-
+*/
 // ==================== EXPORTAR CLIENTE ====================
 
 export { stripe };
