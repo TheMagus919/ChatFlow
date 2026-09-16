@@ -55,11 +55,44 @@ export const initSocket = (server: any) => {
           process.env.JWT_SECRET
         ) as JwtPayload;
 
-      if (!decoded.userId) {
+      if (
+        !decoded.userId ||
+        !Number.isInteger(decoded.userId) ||
+        decoded.userId <= 0
+      ) {
         return next(
           new Error('Token inválido')
         );
       }
+
+      const [users]: any = await pool.query(
+        `
+        SELECT id
+        FROM users
+        WHERE id = ?
+          AND is_active = 1
+        LIMIT 1
+        `,
+        [decoded.userId]
+      );
+
+      if (!users.length) {
+        return next(
+          new Error('Usuario no autorizado')
+        );
+      }
+      /*
+      const decoded =
+        jwt.verify(
+          token,
+          process.env.JWT_SECRET
+        ) as JwtPayload;
+
+      if (!decoded.userId) {
+        return next(
+          new Error('Token inválido')
+        );
+      }*/
 
       socket.userId = decoded.userId;
 
@@ -324,24 +357,53 @@ export const initSocket = (server: any) => {
       // ==========================
 
       socket.on(
-        'whatsapp_message',
-        (message) => {
+      'whatsapp_message',
+      async (message) => {
+
+        try {
+          const conversationId = Number(message?.conversationId);
 
           if (
-            message?.conversationId
+            !Number.isInteger(conversationId) ||
+            conversationId <= 0
           ) {
-
-            socket.to(
-              `conversation_${message.conversationId}`
-            ).emit(
-              'whatsapp_message',
-              message
-            );
-
+            return;
           }
 
+          const [rows]: any = await pool.query(
+            `
+            SELECT id
+            FROM conversations
+            WHERE id = ?
+              AND users_id = ?
+            LIMIT 1
+            `,
+            [conversationId, userId]
+          );
+
+          if (!rows.length) {
+            console.warn(
+              `⚠️ Usuario ${userId} intentó emitir mensaje de WhatsApp en conversación ${conversationId}`
+            );
+            return;
+          }
+
+          socket.to(
+            `conversation_${conversationId}`
+          ).emit(
+            'whatsapp_message',
+            message
+          );
+
+        } catch (error) {
+          console.error(
+            'Error en whatsapp_message:',
+            error
+          );
         }
-      );
+
+      }
+    );
 
 
       // ==========================
@@ -349,24 +411,53 @@ export const initSocket = (server: any) => {
       // ==========================
 
       socket.on(
-        'instagram_message',
-        (message) => {
+      'instagram_message',
+      async (message) => {
+
+        try {
+          const conversationId = Number(message?.conversationId);
 
           if (
-            message?.conversationId
+            !Number.isInteger(conversationId) ||
+            conversationId <= 0
           ) {
-
-            socket.to(
-              `conversation_${message.conversationId}`
-            ).emit(
-              'instagram_message',
-              message
-            );
-
+            return;
           }
 
+          const [rows]: any = await pool.query(
+            `
+            SELECT id
+            FROM conversations
+            WHERE id = ?
+              AND users_id = ?
+            LIMIT 1
+            `,
+            [conversationId, userId]
+          );
+
+          if (!rows.length) {
+            console.warn(
+              `⚠️ Usuario ${userId} intentó emitir mensaje de Instagram en conversación ${conversationId}`
+            );
+            return;
+          }
+
+          socket.to(
+            `conversation_${conversationId}`
+          ).emit(
+            'instagram_message',
+            message
+          );
+
+        } catch (error) {
+          console.error(
+            'Error en instagram_message:',
+            error
+          );
         }
-      );
+
+      }
+    );
 
 
       // ==========================
@@ -374,24 +465,53 @@ export const initSocket = (server: any) => {
       // ==========================
 
       socket.on(
-        'facebook_message',
-        (message) => {
+      'facebook_message',
+      async (message) => {
+
+        try {
+          const conversationId = Number(message?.conversationId);
 
           if (
-            message?.conversationId
+            !Number.isInteger(conversationId) ||
+            conversationId <= 0
           ) {
-
-            socket.to(
-              `conversation_${message.conversationId}`
-            ).emit(
-              'facebook_message',
-              message
-            );
-
+            return;
           }
 
+          const [rows]: any = await pool.query(
+            `
+            SELECT id
+            FROM conversations
+            WHERE id = ?
+              AND users_id = ?
+            LIMIT 1
+            `,
+            [conversationId, userId]
+          );
+
+          if (!rows.length) {
+            console.warn(
+              `⚠️ Usuario ${userId} intentó emitir mensaje de Facebook en conversación ${conversationId}`
+            );
+            return;
+          }
+
+          socket.to(
+            `conversation_${conversationId}`
+          ).emit(
+            'facebook_message',
+            message
+          );
+
+        } catch (error) {
+          console.error(
+            'Error en facebook_message:',
+            error
+          );
         }
-      );
+
+      }
+    );
 
 
       // ==========================
