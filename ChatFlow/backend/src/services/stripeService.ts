@@ -35,7 +35,6 @@ export interface CreateCheckoutParams {
   userId: number;
   userEmail: string;
   origin: string;
-  plannedLimit: number;
 }
 
 export interface CreatePortalParams {
@@ -77,25 +76,40 @@ export async function getPriceById(priceId: string) {
 
 // ==================== CHECKOUT ====================
 
-export async function createCheckoutSession(params: CreateCheckoutParams) {
-  const { priceId, userId, userEmail, origin, plannedLimit } = params;
+export async function createCheckoutSession(
+  params: CreateCheckoutParams
+) {
+  const {
+    priceId,
+    userId,
+    userEmail,
+    origin
+  } = params;
 
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
+
     payment_method_types: ['card'],
+
     line_items: [
       {
         price: priceId,
         quantity: 1,
       },
     ],
-    success_url: `${origin}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/pricing?cancelled=true`,
+
+    success_url:
+      `${origin}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
+
+    cancel_url:
+      `${origin}/pricing?cancelled=true`,
+
     metadata: {
       userId: userId.toString(),
-      plannedLimit: plannedLimit.toString(),
     },
+
     customer_email: userEmail,
+
     subscription_data: {
       metadata: {
         userId: userId.toString(),

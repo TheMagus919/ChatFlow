@@ -74,6 +74,127 @@ export class CustomerController {
     }
   }
 
+  async create(userId: number, data: CreateCustomer): Promise<Customer> {
+    const connection = await pool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      // Bloqueamos temporalmente la fila del usuario para evitar
+      // que dos solicitudes simultáneas superen el límite.
+      const [userRows]: any = await connection.execute(
+        `
+        SELECT customers_limit
+        FROM users
+        WHERE id = ?
+        FOR UPDATE
+        `,
+        [userId]
+      );
+
+      if (!userRows.length) {
+        throw new Error('USER_NOT_FOUND');
+      }
+
+      const customersLimit = Number(userRows[0].customers_limit);
+
+      // Contamos los clientes actuales del usuario.
+      const [countRows]: any = await connection.execute(
+        `
+        SELECT COUNT(*) AS total
+        FROM customers
+        WHERE user_id = ?
+        `,
+        [userId]
+      );
+
+      const currentCustomers = Number(countRows[0].total);
+
+      if (
+        !Number.isFinite(customersLimit) ||
+        customersLimit < 0
+      ) {
+        throw new Error('INVALID_CUSTOMER_LIMIT');
+      }
+
+      if (currentCustomers >= customersLimit) {
+        throw new Error('CUSTOMER_LIMIT_REACHED');
+      }
+
+      const [result]: any = await connection.execute(
+        `
+        INSERT INTO customers
+          (user_id, name, phone, email, tags, status)
+        VALUES (?, ?, ?, ?, ?, ?)
+        `,
+        [
+          userId,
+          data.name,
+          data.phone,
+          data.email || null,
+          JSON.stringify(data.tags || []),
+          data.status || 'new'
+        ]
+      );
+
+      const [rows]: any = await connection.execute(
+        `
+        SELECT *
+        FROM customers
+        WHERE id = ?
+          AND user_id = ?
+        `,
+        [result.insertId, userId]
+      );
+
+      if (!rows.length) {
+        throw new Error('CUSTOMER_CREATE_FAILED');
+      }
+
+      const customer = rows[0];
+
+      await connection.commit();
+
+      return {
+        ...customer,
+        tags: JSON.parse(customer.tags || '[]')
+      };
+    } catch (error: any) {
+      console.error('Create customer error:', error);
+
+      if (error?.message === 'CUSTOMER_LIMIT_REACHED') {
+        return res.status(403).json({
+          error: 'Customer limit reached',
+          message: 'Has alcanzado el límite de clientes de tu plan.'
+        });
+      }
+
+      if (error?.message === 'USER_NOT_FOUND') {
+        return res.status(404).json({
+          error: 'User not found'
+        });
+      }
+
+      if (error?.message === 'INVALID_CUSTOMER_LIMIT') {
+        return res.status(500).json({
+          error: 'Invalid customer limit configuration'
+        });
+      }
+
+      if (error?.code === 'ER_DUP_ENTRY') {
+        return res.status(409).json({
+          error: 'Phone already exists'
+        });
+      }
+
+      return res.status(500).json({
+        error: 'Error creating customer'
+      });
+    } finally {
+      connection.release();
+    }
+}
+  /*
   async create(req: Request, res: Response) {
     try {
       const userId = this.getUserId(req);
@@ -155,6 +276,25 @@ export class CustomerController {
     } catch (error: any) {
       console.error('Create customer error:', error);
 
+      if (error?.message === 'CUSTOMER_LIMIT_REACHED') {
+        return res.status(403).json({
+          error: 'Customer limit reached',
+          message: 'Has alcanzado el límite de clientes de tu plan.'
+        });
+      }
+
+      if (error?.message === 'USER_NOT_FOUND') {
+        return res.status(404).json({
+          error: 'User not found'
+        });
+      }
+
+      if (error?.message === 'INVALID_CUSTOMER_LIMIT') {
+        return res.status(500).json({
+          error: 'Invalid customer limit configuration'
+        });
+      }
+
       if (error?.code === 'ER_DUP_ENTRY') {
         return res.status(409).json({
           error: 'Phone already exists'
@@ -166,7 +306,7 @@ export class CustomerController {
       });
     }
   }
-
+*/
   async update(req: Request, res: Response) {
     try {
       const userId = this.getUserId(req);

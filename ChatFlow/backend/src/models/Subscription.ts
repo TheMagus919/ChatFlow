@@ -1,5 +1,7 @@
 import { RowDataPacket } from 'mysql2';
+import dotenv from 'dotenv';
 
+dotenv.config();
 // ==================== INTERFACES ====================
 
 export interface Plan {
@@ -41,11 +43,19 @@ export const PLAN_LIMITS: Record<string, number> = {
   free: 10,
 };
 
-export const PLAN_NAMES: Record<string, string> = {
-  price_starter: 'starter',
-  price_pro: 'pro',
-  price_enterprise: 'enterprise',
-};
+export const PLAN_NAMES: Record<string, string> = {};
+
+if (process.env.STRIPE_PRICE_STARTER) {
+  PLAN_NAMES[process.env.STRIPE_PRICE_STARTER] = 'starter';
+}
+
+if (process.env.STRIPE_PRICE_PRO) {
+  PLAN_NAMES[process.env.STRIPE_PRICE_PRO] = 'pro';
+}
+
+if (process.env.STRIPE_PRICE_ENTERPRISE) {
+  PLAN_NAMES[process.env.STRIPE_PRICE_ENTERPRISE] = 'enterprise';
+}
 
 // ==================== WEBHOOK EVENTS ====================
 

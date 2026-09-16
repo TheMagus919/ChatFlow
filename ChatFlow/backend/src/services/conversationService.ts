@@ -117,7 +117,6 @@ export const getConversationById = async (
   };
 };
 
-
 export const createConversation = async ({
   customerId,
   userId
@@ -125,70 +124,157 @@ export const createConversation = async ({
   customerId: number;
   userId: number;
 }) => {
+  const connection = await pool.getConnection();
 
-  /*
-   * Primero verificamos que el cliente
-   * pertenezca al usuario autenticado.
-   */
-  const [customerRows]: any = await pool.query(
-    `
-    SELECT id
-    FROM customers
-    WHERE
-      id = ?
-      AND user_id = ?
-    LIMIT 1
-    `,
-    [
-      customerId,
-      userId
-    ]
-  );
+  try {
+    await connection.beginTransaction();
 
-  if (!customerRows.length) {
-    throw new Error(
-      'El cliente no pertenece al usuario autenticado'
+    /*
+     * Verificar que el cliente pertenezca
+     * al usuario autenticado.
+     */
+    const [customerRows]: any = await connection.query(
+      `
+      SELECT id
+      FROM customers
+      WHERE id = ?
+        AND user_id = ?
+      LIMIT 1
+      `,
+      [
+        customerId,
+        userId
+      ]
     );
-  }
 
-  /*
-   * Buscamos si ya existe la conversación.
-   */
-  const [existingRows]: any = await pool.query(
-    `
-    SELECT
-      c.id,
-      c.customer_id,
-      c.users_id,
-      c.last_message,
-      c.last_message_at,
+    if (!customerRows.length) {
+      throw new Error(
+        'CUSTOMER_NOT_FOUND'
+      );
+    }
 
-      cu.id AS customerIdData,
-      cu.name,
-      cu.phone,
-      cu.status,
-      cu.avatar
+    /*
+     * Buscar una conversación existente.
+     */
+    const [existingRows]: any = await connection.query(
+      `
+      SELECT
+        c.id,
+        c.customer_id,
+        c.users_id,
+        c.last_message,
+        c.last_message_at,
 
-    FROM conversations c
+        cu.id AS customerIdData,
+        cu.name,
+        cu.phone,
+        cu.status,
+        cu.avatar
 
-    INNER JOIN customers cu
-      ON c.customer_id = cu.id
+      FROM conversations c
 
-    WHERE
-      c.customer_id = ?
-      AND c.users_id = ?
+      INNER JOIN customers cu
+        ON c.customer_id = cu.id
 
-    LIMIT 1
-    `,
-    [
-      customerId,
-      userId
-    ]
-  );
+      WHERE c.customer_id = ?
+        AND c.users_id = ?
 
-  if (existingRows.length > 0) {
+      LIMIT 1
+      `,
+      [
+        customerId,
+        userId
+      ]
+    );
 
-    const row = existingRows[0];
+    /*
+     * Si ya existe, no crear otra.
+     */
+    if (existingRows.length > 0) {
+      await connection.commit();
+
+      const row = existingRows[0];
+
+      return {
+        id: row.id,
+        customerId: row.customer_id,
+        userId: row.users_id,
+
+        last_message: row.last_message,
+        last_message_at: row.last_message_at,
+
+        customer: {
+          id: row.customerIdData,
+          name: row.name,
+          phone: row.phone,
+          status: row.status,
+          avatar: row.avatar
+        }
+      };
+    }
+
+    /*
+     * Crear nueva conversación.
+     */
+    const [result]: any = await connection.query(
+      `
+      INSERT INTO conversations
+      (
+        customer_id,
+        users_id
+      )
+      VALUES (?, ?)
+      `,
+      [
+        customerId,
+        userId
+      ]
+    );
+
+    /*
+     * Obtener la conversación recién creada
+     * usando la misma conexión/transacción.
+     */
+    const [newRows]: any = await connection.query(
+      `
+      SELECT
+        c.id,
+        c.customer_id,
+        c.users_id,
+        c.last_message,
+        c.last_message_at,
+
+        cu.id AS customerIdData,
+        cu.name,
+        cu.phone,
+        cu.status,
+        cu.avatar
+
+      FROM conversations c
+
+      INNER JOIN customers cu
+        ON c.customer_id = cu.id
+
+      WHERE c.id = ?
+        AND c.users_id = ?
+
+      LIMIT 1
+      `,
+      [
+        result.insertId,
+        userId
+      ]
+    );
+
+    if (!newRows.length) {
+      throw new Error(
+        'CONVERSATION_CREATE_FAILED'
+      );
+    }
+
+    await connection.commit();
+
+    const row = newRows[0];
 
     return {
       id: row.id,
@@ -206,28 +292,116 @@ export const createConversation = async ({
         avatar: row.avatar
       }
     };
+
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+
+  } finally {
+    connection.release();
   }
-
-  /*
-   * Creamos la conversación.
-   */
-  const [result]: any = await pool.query(
-    `
-    INSERT INTO conversations
-    (
-      customer_id,
-      users_id
-    )
-    VALUES (?, ?)
-    `,
-    [
-      customerId,
-      userId
-    ]
-  );
-
-  return await getConversationById(
-    result.insertId,
-    userId
-  );
 };
+/*
+export const createConversation = async ({
+    customerId,
+    userId
+  }: {
+    customerId: number;
+    userId: number;
+  }) => {
+
+    const [customerRows]: any = await pool.query(
+      `
+      SELECT id
+      FROM customers
+      WHERE
+        id = ?
+        AND user_id = ?
+      LIMIT 1
+      `,
+      [
+        customerId,
+        userId
+      ]
+    );
+
+    if (!customerRows.length) {
+      throw new Error(
+        'El cliente no pertenece al usuario autenticado'
+      );
+    }
+    const [existingRows]: any = await pool.query(
+      `
+      SELECT
+        c.id,
+        c.customer_id,
+        c.users_id,
+        c.last_message,
+        c.last_message_at,
+
+        cu.id AS customerIdData,
+        cu.name,
+        cu.phone,
+        cu.status,
+        cu.avatar
+
+      FROM conversations c
+
+      INNER JOIN customers cu
+        ON c.customer_id = cu.id
+
+      WHERE
+        c.customer_id = ?
+        AND c.users_id = ?
+
+      LIMIT 1
+      `,
+      [
+        customerId,
+        userId
+      ]
+    );
+
+    if (existingRows.length > 0) {
+
+      const row = existingRows[0];
+
+      return {
+        id: row.id,
+        customerId: row.customer_id,
+        userId: row.users_id,
+
+        last_message: row.last_message,
+        last_message_at: row.last_message_at,
+
+        customer: {
+          id: row.customerIdData,
+          name: row.name,
+          phone: row.phone,
+          status: row.status,
+          avatar: row.avatar
+        }
+      };
+    }
+
+    const [result]: any = await pool.query(
+      `
+      INSERT INTO conversations
+      (
+        customer_id,
+        users_id
+      )
+      VALUES (?, ?)
+      `,
+      [
+        customerId,
+        userId
+      ]
+    );
+
+    return await getConversationById(
+      result.insertId,
+      userId
+    );
+};
+*/

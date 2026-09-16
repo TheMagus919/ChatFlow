@@ -136,14 +136,16 @@ export const createConversation = async (
     );
 
   } catch (error) {
+      if (error?.message === 'CUSTOMER_NOT_FOUND') {
+        return res.status(404).json({
+          error: 'Customer not found'
+        });
+      }
 
-    console.error(
-      'Error creating conversation:',
-      error
-    );
-
-    return res.status(500).json({
-      error: 'Error creating conversation'
-    });
+      if (error?.message === 'CONVERSATION_CREATE_FAILED') {
+        return res.status(500).json({
+          error: 'Error creating conversation'
+        });
+      }
   }
 };

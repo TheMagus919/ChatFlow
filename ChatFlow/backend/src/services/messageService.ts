@@ -10,7 +10,7 @@ interface SendMessageDTO {
   conversationId: number;
   userId: number;
 }
-
+/*
 export const sendMessage = async ({
   content,
   customerId,
@@ -95,7 +95,114 @@ export const sendMessage = async ({
 
   return message;
 };
+*/
 
+export const sendMessage = async ({
+  content,
+  customerId,
+  conversationId,
+  userId
+}: SendMessageDTO) => {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // Verificar que la conversación y el cliente
+    // pertenezcan al usuario autenticado.
+    const [conversations]: any = await connection.query(
+      `
+      SELECT c.id
+      FROM conversations c
+      INNER JOIN customers cu
+        ON cu.id = c.customer_id
+      WHERE c.id = ?
+        AND c.users_id = ?
+        AND c.customer_id = ?
+        AND cu.user_id = ?
+      LIMIT 1
+      `,
+      [
+        conversationId,
+        userId,
+        customerId,
+        userId
+      ]
+    );
+
+    if (!conversations.length) {
+      throw new Error('CONVERSATION_NOT_FOUND');
+    }
+
+    // Crear mensaje.
+    const [result]: any = await connection.query(
+      `
+      INSERT INTO messages
+      (
+        content,
+        customer_id,
+        conversation_id,
+        direction
+      )
+      VALUES (?, ?, ?, 'outgoing')
+      `,
+      [
+        content,
+        customerId,
+        conversationId
+      ]
+    );
+
+    // Actualizar última actividad de la conversación.
+    const [updateResult]: any = await connection.query(
+      `
+      UPDATE conversations
+      SET
+        last_message = ?,
+        last_message_at = NOW()
+      WHERE id = ?
+        AND users_id = ?
+      `,
+      [
+        content,
+        conversationId,
+        userId
+      ]
+    );
+
+    if (updateResult.affectedRows === 0) {
+      throw new Error('CONVERSATION_UPDATE_FAILED');
+    }
+
+    await connection.commit();
+
+    const message = {
+      id: result.insertId,
+      content,
+      customerId,
+      conversationId,
+      direction: 'outgoing',
+      created_at: new Date()
+    };
+
+    // Socket.IO se ejecuta después del commit.
+    const io = getIO();
+
+    io.to(`conversation_${conversationId}`).emit(
+      'new_message',
+      message
+    );
+
+    return message;
+
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+
+  } finally {
+    connection.release();
+  }
+};
 
 export const getMessagesByConversation = async (
   conversationId: number,
