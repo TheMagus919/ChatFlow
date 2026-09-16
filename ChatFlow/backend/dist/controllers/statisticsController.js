@@ -37,15 +37,18 @@ exports.getDashboardStats = void 0;
 const statisticsService = __importStar(require("../services/statisticsService"));
 const getDashboardStats = async (req, res) => {
     try {
-        const userId = req.user?.userId;
-        console.log(userId);
-        console.log('USER ID:', req.user.id);
-        const data = await statisticsService.getDashboardStats(userId);
-        return res.json(data);
+        if (!req.user?.userId) {
+            res.status(401).json({
+                error: 'Usuario no autenticado'
+            });
+            return;
+        }
+        const data = await statisticsService.getDashboardStats(req.user.userId);
+        res.json(data);
     }
     catch (error) {
-        console.error(error);
-        return res.status(500).json({
+        console.error('Error loading statistics:', error);
+        res.status(500).json({
             error: 'Error loading statistics'
         });
     }

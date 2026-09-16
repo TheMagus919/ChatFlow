@@ -30,7 +30,7 @@ export const initSocket = (server: any) => {
   // AUTENTICACIÓN DEL SOCKET
   // ==========================
 
-  io.use((socket: AuthenticatedSocket, next) => {
+  io.use(async(socket: AuthenticatedSocket, next) => {
 
     try {
 

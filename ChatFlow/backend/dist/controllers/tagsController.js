@@ -97,7 +97,8 @@ class TagsController {
     async getById(req, res) {
         try {
             const id = req.params.id;
-            const tag = await this.customerTagService.findTagsByCustomer(id);
+            const userId = req.user?.userId;
+            const tag = await this.customerTagService.findTagsByCustomer(id, String(userId));
             res.json({ success: true, data: tag });
         }
         catch (error) {

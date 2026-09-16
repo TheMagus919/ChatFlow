@@ -7,10 +7,18 @@ exports.simulateIncoming = exports.markAsDelivered = exports.getMessagesByConver
 const database_1 = __importDefault(require("../config/database"));
 const socket_1 = require("../socket");
 const notificationService_1 = require("./notificationService");
-const sendMessage = async ({ content, customerId, conversationId, userId }) => {
-    // Verificar que la conversación y el cliente
-    // pertenezcan al usuario autenticado
-    const [conversations] = await database_1.default.query(`
+/*
+export const sendMessage = async ({
+  content,
+  customerId,
+  conversationId,
+  userId
+}: SendMessageDTO) => {
+
+  // Verificar que la conversación y el cliente
+  // pertenezcan al usuario autenticado
+  const [conversations]: any = await pool.query(
+    `
     SELECT c.id
     FROM conversations c
     INNER JOIN customers cu ON cu.id = c.customer_id
@@ -19,16 +27,21 @@ const sendMessage = async ({ content, customerId, conversationId, userId }) => {
       AND c.customer_id = ?
       AND cu.user_id = ?
     LIMIT 1
-    `, [
-        conversationId,
-        userId,
-        customerId,
-        userId
-    ]);
-    if (!conversations.length) {
-        throw new Error('CONVERSATION_NOT_FOUND');
-    }
-    const [result] = await database_1.default.query(`
+    `,
+    [
+      conversationId,
+      userId,
+      customerId,
+      userId
+    ]
+  );
+
+  if (!conversations.length) {
+    throw new Error('CONVERSATION_NOT_FOUND');
+  }
+
+  const [result]: any = await pool.query(
+    `
     INSERT INTO messages
     (
       content,
@@ -37,34 +50,126 @@ const sendMessage = async ({ content, customerId, conversationId, userId }) => {
       direction
     )
     VALUES (?, ?, ?, 'outgoing')
-    `, [
-        content,
-        customerId,
-        conversationId
-    ]);
-    await database_1.default.query(`
+    `,
+    [
+      content,
+      customerId,
+      conversationId
+    ]
+  );
+
+  await pool.query(
+    `
     UPDATE conversations
     SET
       last_message = ?,
       last_message_at = NOW()
     WHERE id = ?
       AND users_id = ?
-    `, [
+    `,
+    [
+      content,
+      conversationId,
+      userId
+    ]
+  );
+
+  const message = {
+    id: result.insertId,
+    content,
+    customerId,
+    conversationId,
+    direction: 'outgoing',
+    created_at: new Date()
+  };
+
+  const io = getIO();
+
+  io.to(`conversation_${conversationId}`).emit(
+    'new_message',
+    message
+  );
+
+  return message;
+};
+*/
+const sendMessage = async ({ content, customerId, conversationId, userId }) => {
+    const connection = await database_1.default.getConnection();
+    try {
+        await connection.beginTransaction();
+        // Verificar que la conversación y el cliente
+        // pertenezcan al usuario autenticado.
+        const [conversations] = await connection.query(`
+      SELECT c.id
+      FROM conversations c
+      INNER JOIN customers cu
+        ON cu.id = c.customer_id
+      WHERE c.id = ?
+        AND c.users_id = ?
+        AND c.customer_id = ?
+        AND cu.user_id = ?
+      LIMIT 1
+      `, [
+            conversationId,
+            userId,
+            customerId,
+            userId
+        ]);
+        if (!conversations.length) {
+            throw new Error('CONVERSATION_NOT_FOUND');
+        }
+        // Crear mensaje.
+        const [result] = await connection.query(`
+      INSERT INTO messages
+      (
         content,
-        conversationId,
-        userId
-    ]);
-    const message = {
-        id: result.insertId,
-        content,
-        customerId,
-        conversationId,
-        direction: 'outgoing',
-        created_at: new Date()
-    };
-    const io = (0, socket_1.getIO)();
-    io.to(`conversation_${conversationId}`).emit('new_message', message);
-    return message;
+        customer_id,
+        conversation_id,
+        direction
+      )
+      VALUES (?, ?, ?, 'outgoing')
+      `, [
+            content,
+            customerId,
+            conversationId
+        ]);
+        // Actualizar última actividad de la conversación.
+        const [updateResult] = await connection.query(`
+      UPDATE conversations
+      SET
+        last_message = ?,
+        last_message_at = NOW()
+      WHERE id = ?
+        AND users_id = ?
+      `, [
+            content,
+            conversationId,
+            userId
+        ]);
+        if (updateResult.affectedRows === 0) {
+            throw new Error('CONVERSATION_UPDATE_FAILED');
+        }
+        await connection.commit();
+        const message = {
+            id: result.insertId,
+            content,
+            customerId,
+            conversationId,
+            direction: 'outgoing',
+            created_at: new Date()
+        };
+        // Socket.IO se ejecuta después del commit.
+        const io = (0, socket_1.getIO)();
+        io.to(`conversation_${conversationId}`).emit('new_message', message);
+        return message;
+    }
+    catch (error) {
+        await connection.rollback();
+        throw error;
+    }
+    finally {
+        connection.release();
+    }
 };
 exports.sendMessage = sendMessage;
 const getMessagesByConversation = async (conversationId, userId) => {

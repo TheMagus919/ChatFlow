@@ -10,7 +10,6 @@ router.get('/pipeline', auth_1.authenticateToken, controller.getByStatus);
 router.patch('/:id/status', auth_1.authenticateToken, controller.updateStatus);
 router.post('/:customerId/tags', auth_1.authenticateToken, controller.assignTags.bind(controller));
 router.get('/:customerId/tags', auth_1.authenticateToken, controller.getCustomerTags);
-//router.get('/phone/:phone', authenticateToken, controller.findByPhone);
 //ABM
 router.post('/', auth_1.authenticateToken, controller.create);
 router.put('/:id', auth_1.authenticateToken, controller.update);

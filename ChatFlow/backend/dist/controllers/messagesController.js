@@ -148,7 +148,7 @@ const markDelivered = async (req, res) => {
 exports.markDelivered = markDelivered;
 const simulateIncoming = async (req, res) => {
     try {
-        const userId = 4;//req.user?.userId;
+        const userId = 4; //req.user?.userId;
         if (!userId) {
             return res.status(401).json({
                 error: 'Unauthorized'

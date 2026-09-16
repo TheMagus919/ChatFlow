@@ -113,23 +113,21 @@ async function createCheckout(req, res) {
             });
             return;
         }
-        // Determinar el límite según el plan
-        let plannedLimit = 10;
-        let planKey = 'free';
-        for (const [key, limit] of Object.entries(Subscription_1.PLAN_LIMITS)) {
-            if (priceId.includes(key)) {
-                plannedLimit = limit;
-                planKey = key;
-                break;
-            }
+        // Verificar que el Price ID pertenece a un plan válido
+        const planName = Subscription_1.PLAN_NAMES[priceId];
+        if (!planName) {
+            res.status(400).json({
+                success: false,
+                error: 'El precio seleccionado no corresponde a un plan válido',
+            });
+            return;
         }
         const origin = req.headers.origin || process.env.FRONTEND_URL || 'http://localhost:4200';
         const session = await stripeService.createCheckoutSession({
             priceId,
             userId,
             userEmail,
-            origin,
-            plannedLimit,
+            origin
         });
         res.json({
             success: true,
@@ -366,117 +364,111 @@ async function handleWebhook(req, res) {
         });
     }
 }
-/* funcion que borrar
-export async function handleWebhook(req: AuthRequest, res: Response): Promise<void> {
-  const sig = req.headers['stripe-signature'] as string;
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
-
-  let event: any;
-
-  try {
-    // En desarrollo, omitir verificación si no hay secret
-    if (!webhookSecret || webhookSecret.startsWith('whsec_')) {
-      console.warn('⚠️ Webhook secret no configurado, saltando verificación');
-      event = JSON.parse(req.body.toString());
-    } else {
-      event = stripeService.verifyWebhookSignature(
-        req.body,
-        sig,
-        webhookSecret
-      );
-    }
-  } catch (err) {
-    console.error('❌ Error verificando webhook:', err);
-    res.status(400).send(
-      `Webhook Error: ${err instanceof Error ? err.message : 'Unknown error'}`
-    );
-    return;
-  }
-
-  console.log(`📥 Evento recibido: ${event.type}`);
-
-  try {
-    switch (event.type) {
-      case WebhookEventType.CHECKOUT_COMPLETED: {
-        const session = event.data.object;
-        await handleCheckoutCompleted(session);
-        break;
-      }
-
-      case WebhookEventType.SUBSCRIPTION_UPDATED: {
-        const subscription = event.data.object;
-        await handleSubscriptionUpdated(subscription);
-        break;
-      }
-
-      case WebhookEventType.SUBSCRIPTION_DELETED: {
-        const subscription = event.data.object;
-        await handleSubscriptionDeleted(subscription);
-        break;
-      }
-
-      case WebhookEventType.INVOICE_PAYMENT_FAILED: {
-        const invoice = event.data.object;
-        await handlePaymentFailed(invoice);
-        break;
-      }
-
-      default:
-        console.log(`ℹ️ Evento no manejado: ${event.type}`);
-    }
-
-    res.json({ received: true });
-  } catch (error) {
-    console.error('❌ Error procesando webhook:', error);
-    res.status(500).json({ error: 'Error processing webhook' });
-  }
-}
-*/
 // ==================== PRIVATE HANDLERS ====================
 async function handleCheckoutCompleted(session) {
     const userId = parseInt(session.metadata?.userId || '0', 10);
-    const plannedLimit = parseInt(session.metadata?.plannedLimit || '10', 10);
     if (!userId) {
         console.error('❌ No se encontró userId en metadata');
         return;
     }
-    // Determinar nombre del plan
-    let planName = 'free';
     const subscriptionId = session.subscription;
-    if (subscriptionId) {
-        const subscription = await stripeService.getSubscription(subscriptionId);
-        if (subscription) {
-            const priceId = subscription.items?.data[0]?.price?.id;
-            if (priceId) {
-                for (const [key, name] of Object.entries(Subscription_1.PLAN_NAMES)) {
-                    if (priceId.includes(key)) {
-                        planName = name;
-                        break;
-                    }
-                }
-            }
-        }
+    if (!subscriptionId) {
+        console.error(`❌ No se encontró subscriptionId para checkout del usuario ${userId}`);
+        return;
     }
-    await database_1.default.query(`UPDATE users SET 
-      subscription_plan = ?, 
+    const subscription = await stripeService.getSubscription(subscriptionId);
+    if (!subscription) {
+        console.error(`❌ No se pudo obtener la suscripción ${subscriptionId} desde Stripe`);
+        return;
+    }
+    const priceId = subscription.items?.data?.[0]?.price?.id;
+    if (!priceId) {
+        console.error(`❌ No se encontró priceId en la suscripción ${subscriptionId}`);
+        return;
+    }
+    // El plan se determina exclusivamente por el Price ID real de Stripe
+    const planName = Subscription_1.PLAN_NAMES[priceId];
+    if (!planName) {
+        console.error(`❌ Price ID de Stripe no reconocido: ${priceId}`);
+        return;
+    }
+    const customersLimit = Subscription_1.PLAN_LIMITS[planName];
+    if (customersLimit === undefined) {
+        console.error(`❌ No existe límite configurado para el plan ${planName}`);
+        return;
+    }
+    await database_1.default.query(`
+    UPDATE users
+    SET
+      subscription_plan = ?,
       subscription_status = 'active',
       subscription_id = ?,
       customers_limit = ?,
       updated_at = NOW()
-    WHERE id = ?`, [planName, subscriptionId, plannedLimit, userId]);
-    console.log(`✅ Suscripción activada para usuario ${userId}: ${planName}`);
+    WHERE id = ?
+    `, [
+        planName,
+        subscriptionId,
+        customersLimit,
+        userId
+    ]);
+    console.log(`✅ Suscripción activada para usuario ${userId}:`, {
+        plan: planName,
+        limit: customersLimit,
+        subscriptionId
+    });
 }
 async function handleSubscriptionUpdated(subscription) {
     const customerId = subscription.customer;
-    if (!customerId)
+    if (!customerId) {
         return;
+    }
     const [users] = await database_1.default.query('SELECT id FROM users WHERE stripe_customer_id = ?', [customerId]);
-    if (!users || users.length === 0)
+    if (!users || users.length === 0) {
+        console.warn(`⚠️ No se encontró usuario para Stripe customer ${customerId}`);
         return;
+    }
     const userId = users[0].id;
-    const status = subscription.status === 'active' ? 'active' : subscription.status;
-    await database_1.default.query('UPDATE users SET subscription_status = ?, updated_at = NOW() WHERE id = ?', [status, userId]);
-    console.log(`✅ Suscripción actualizada para usuario ${userId}: ${status}`);
+    const priceId = subscription.items?.data?.[0]?.price?.id;
+    if (!priceId) {
+        console.error(`❌ No se encontró priceId en la suscripción ${subscription.id}`);
+        return;
+    }
+    // Buscar el plan a partir del priceId REAL de Stripe
+    const planEntry = Object.entries(Subscription_1.PLAN_NAMES).find(([stripePriceId]) => stripePriceId === priceId);
+    if (!planEntry) {
+        console.error(`❌ Price ID de Stripe no reconocido: ${priceId}`);
+        return;
+    }
+    const planName = planEntry[1];
+    const customersLimit = Subscription_1.PLAN_LIMITS[planName];
+    if (customersLimit === undefined) {
+        console.error(`❌ No existe límite configurado para el plan ${planName}`);
+        return;
+    }
+    const status = subscription.status;
+    await database_1.default.query(`
+    UPDATE users
+    SET
+      subscription_plan = ?,
+      subscription_status = ?,
+      subscription_id = ?,
+      customers_limit = ?,
+      updated_at = NOW()
+    WHERE id = ?
+    `, [
+        planName,
+        status,
+        subscription.id,
+        customersLimit,
+        userId
+    ]);
+    console.log(`✅ Suscripción actualizada para usuario ${userId}:`, {
+        plan: planName,
+        status,
+        limit: customersLimit,
+        subscriptionId: subscription.id
+    });
 }
 async function handleSubscriptionDeleted(subscription) {
     const customerId = subscription.customer;

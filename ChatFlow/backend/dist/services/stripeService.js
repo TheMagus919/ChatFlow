@@ -48,7 +48,7 @@ async function getPriceById(priceId) {
 }
 // ==================== CHECKOUT ====================
 async function createCheckoutSession(params) {
-    const { priceId, userId, userEmail, origin, plannedLimit } = params;
+    const { priceId, userId, userEmail, origin } = params;
     const session = await stripe.checkout.sessions.create({
         mode: 'subscription',
         payment_method_types: ['card'],
@@ -62,7 +62,6 @@ async function createCheckoutSession(params) {
         cancel_url: `${origin}/pricing?cancelled=true`,
         metadata: {
             userId: userId.toString(),
-            plannedLimit: plannedLimit.toString(),
         },
         customer_email: userEmail,
         subscription_data: {

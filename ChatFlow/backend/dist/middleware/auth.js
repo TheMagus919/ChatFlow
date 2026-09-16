@@ -44,6 +44,12 @@ const authenticateToken = async (req, res, next) => {
             });
             return;
         }
+        if (!user.is_active) {
+            res.status(403).json({
+                error: 'Usuario desactivado'
+            });
+            return;
+        }
         // Guardamos siempre la misma estructura.
         // A partir de ahora todo el backend debe utilizar req.user.userId.
         req.user = {

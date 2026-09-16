@@ -7,5 +7,5 @@ const router = (0, express_1.Router)();
 router.post('/', auth_1.authenticateToken, messagesController_1.sendMessage);
 router.get('/conversation/:conversationId', auth_1.authenticateToken, messagesController_1.getMessagesByConversation);
 router.patch('/delivered', auth_1.authenticateToken, messagesController_1.markDelivered);
-router.post('/simulate',  messagesController_1.simulateIncoming);
+router.post('/simulate', messagesController_1.simulateIncoming);
 exports.default = router;

@@ -8,23 +8,69 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const database_1 = __importDefault(require("../config/database"));
 const SALT_ROUNDS = 12;
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretfallback';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET no está configurado');
+}
 class AuthService {
     async register(email, password, name) {
+        const normalizedEmail = email.trim().toLowerCase();
+        const normalizedName = name.trim();
+        const [existingUsers] = await database_1.default.execute('SELECT id FROM users WHERE email = ? LIMIT 1', [normalizedEmail]);
+        if (existingUsers.length > 0) {
+            throw new Error('El email ya está registrado');
+        }
         const hashedPassword = await bcryptjs_1.default.hash(password, SALT_ROUNDS);
-        const [insertResult] = await database_1.default.execute('INSERT INTO users (email, password, name) VALUES (?, ?, ?)', [email, hashedPassword, name]);
+        const [insertResult] = await database_1.default.execute('INSERT INTO users (email, password, name) VALUES (?, ?, ?)', [
+            normalizedEmail,
+            hashedPassword,
+            normalizedName
+        ]);
         const insertId = insertResult.insertId;
-        const [userResult] = await database_1.default.execute('SELECT * FROM users WHERE id = ?', [insertId]);
+        const [userResult] = await database_1.default.execute(`SELECT
+        id,
+        email,
+        password,
+        name,
+        subscription,
+        is_active,
+        created_at,
+        updated_at
+       FROM users
+       WHERE id = ?`, [insertId]);
+        if (!userResult[0]) {
+            throw new Error('No se pudo recuperar el usuario creado');
+        }
         return userResult[0];
     }
     async login(email, password) {
-        const [userResult] = await database_1.default.execute('SELECT * FROM users WHERE email = ? AND is_active = true', [email]);
+        const normalizedEmail = email.trim().toLowerCase();
+        const [userResult] = await database_1.default.execute(`SELECT
+        id,
+        email,
+        password,
+        name,
+        subscription,
+        is_active,
+        created_at,
+        updated_at
+       FROM users
+       WHERE email = ?
+       LIMIT 1`, [normalizedEmail]);
         const user = userResult[0];
-        if (!user || !await bcryptjs_1.default.compare(password, user.password)) {
-            throw new Error('Invalid credentials');
+        if (!user || !user.is_active) {
+            throw new Error('Credenciales inválidas');
         }
-        const token = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
-        // ✅ FIXED: Explicit object sin 'password'
+        const passwordValid = await bcryptjs_1.default.compare(password, user.password);
+        if (!passwordValid) {
+            throw new Error('Credenciales inválidas');
+        }
+        const token = jsonwebtoken_1.default.sign({
+            userId: user.id,
+            email: user.email
+        }, JWT_SECRET, {
+            expiresIn: '7d'
+        });
         const userWithoutPassword = {
             id: user.id,
             email: user.email,
@@ -38,12 +84,18 @@ class AuthService {
             token
         };
     }
-    logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-    }
     async findById(userId) {
-        const [userResult] = await database_1.default.execute('SELECT id, email, name, subscription, is_active, created_at FROM users WHERE id = ?', [userId]);
+        const [userResult] = await database_1.default.execute(`SELECT
+        id,
+        email,
+        name,
+        subscription,
+        is_active,
+        created_at,
+        updated_at
+       FROM users
+       WHERE id = ?
+       LIMIT 1`, [userId]);
         return userResult[0] || null;
     }
 }
