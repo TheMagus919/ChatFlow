@@ -132,57 +132,46 @@ export class PipelineComponent implements OnInit {
   trackByFn(index: number, customer: PipelineCustomer): number {
     return customer.id || index;
   }
-
   loadPipeline(): void {
+  const token = this.authService.getToken();
 
-    const token = this.authService.getToken();
+  console.log('PIPELINE TOKEN:', token);
 
-    this.http.get<any[]>(
-      `${this.apiUrl}/pipeline`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
+  this.http.get<any[]>(
+    `${this.apiUrl}/pipeline`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  )
+  .subscribe({
+    next: (customers) => {
+
+      this.newCustomers = [];
+      this.inProgressCustomers = [];
+      this.closedCustomers = [];
+
+      customers.forEach((customer) => {
+        const status = customer.status?.toLowerCase();
+
+        if (status === 'new') {
+          this.newCustomers.push(customer);
+        } else if (status === 'in_conversation') {
+          this.inProgressCustomers.push(customer);
+        } else if (status === 'closed') {
+          this.closedCustomers.push(customer);
         }
-      }
-    )
-    .subscribe({
+      });
 
-      next: (customers) => {
-
-        this.newCustomers = [];
-        this.inProgressCustomers = [];
-        this.closedCustomers = [];
-
-        customers.forEach((customer) => {
-          const status = customer.status?.toLowerCase();
-
-          if (status === 'new') {
-            this.newCustomers.push(customer);
-          }
-
-          else if (status === 'in_conversation') {
-            this.inProgressCustomers.push(customer);
-          }
-
-          else if (status === 'closed') {
-            this.closedCustomers.push(customer);
-          }
-
-        });
-
-        this.updateStats();
-
-        this.cdr.detectChanges();
-      },
-
-      error: (err) => {
-        console.error(err);
-      }
-
-    });
-
-  }
-
+      this.updateStats();
+      this.cdr.detectChanges();
+    },
+    error: (err) => {
+      console.error('PIPELINE ERROR:', err);
+    }
+  });
+}
   drop(event: CdkDragDrop<PipelineCustomer[]>): void {
 
     if (event.previousContainer === event.container) {

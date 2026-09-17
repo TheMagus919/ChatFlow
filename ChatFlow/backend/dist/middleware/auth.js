@@ -9,6 +9,7 @@ const authService_1 = require("../services/authService");
 const authenticateToken = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
+        console.log('AUTH DEBUG:', req.method, req.originalUrl, 'authorization:', authHeader);
         if (!authHeader) {
             res.status(401).json({
                 error: 'Token de autenticación requerido'
