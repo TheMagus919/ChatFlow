@@ -18,44 +18,47 @@ class NotificationService {
     }
     async create(userId, title, message, type, referenceId) {
         const [result] = await database_1.default.query(`
-        INSERT INTO notifications
-        (
-          user_id,
-          title,
-          message,
-          type,
-          reference_id
-        )
-        VALUES (?, ?, ?, ?, ?)
-        `, [
+      INSERT INTO notifications
+      (
+        user_id,
+        title,
+        message,
+        type,
+        reference_id
+      )
+      VALUES (?, ?, ?, ?, ?)
+      `, [
             userId,
             title,
             message,
             type,
-            referenceId || null
+            referenceId ?? null
         ]);
         const notification = {
             id: result.insertId,
             user_id: userId,
             title,
             message,
-            type: type,
+            type,
             is_read: false,
-            reference_id: referenceId,
+            reference_id: referenceId ?? null,
             created_at: new Date()
         };
         (0, socket_1.getIO)()
             .to(`user_${userId}`)
             .emit('new_notification', notification);
-        console.log('🔔 Emitiendo notificación a', `user_${userId}`);
         return notification;
     }
-    async markAsRead(id) {
+    async markAsRead(id, userId) {
         await database_1.default.execute(`
       UPDATE notifications
       SET is_read = true
       WHERE id = ?
-      `, [id]);
+        AND user_id = ?
+      `, [
+            id,
+            userId
+        ]);
     }
     async markAllAsRead(userId) {
         await database_1.default.execute(`
@@ -66,12 +69,12 @@ class NotificationService {
     }
     async countUnread(userId) {
         const [rows] = await database_1.default.execute(`
-        SELECT COUNT(*) as total
-        FROM notifications
-        WHERE user_id = ?
+      SELECT COUNT(*) AS total
+      FROM notifications
+      WHERE user_id = ?
         AND is_read = false
-        `, [userId]);
-        return rows[0].total;
+      `, [userId]);
+        return Number(rows[0]?.total ?? 0);
     }
 }
 exports.NotificationService = NotificationService;

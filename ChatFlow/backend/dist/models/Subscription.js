@@ -8,20 +8,16 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 // ==================== PLAN LIMITS ====================
 exports.PLAN_LIMITS = {
-    starter: 100,
-    pro: 1000,
-    enterprise: 10000,
+    business: 1000,
+    pro: 100,
     free: 10,
 };
 exports.PLAN_NAMES = {};
-if (process.env.STRIPE_PRICE_STARTER) {
-    exports.PLAN_NAMES[process.env.STRIPE_PRICE_STARTER] = 'starter';
-}
 if (process.env.STRIPE_PRICE_PRO) {
     exports.PLAN_NAMES[process.env.STRIPE_PRICE_PRO] = 'pro';
 }
-if (process.env.STRIPE_PRICE_ENTERPRISE) {
-    exports.PLAN_NAMES[process.env.STRIPE_PRICE_ENTERPRISE] = 'enterprise';
+if (process.env.STRIPE_PRICE_BUSINESS) {
+    exports.PLAN_NAMES[process.env.STRIPE_PRICE_BUSINESS] = 'business';
 }
 // ==================== WEBHOOK EVENTS ====================
 var WebhookEventType;

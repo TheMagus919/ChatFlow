@@ -9,8 +9,14 @@ class NotificationController {
     async getByUser(req, res) {
         try {
             const userId = Number(req.params.userId);
-            const notifications = await this.notificationService
-                .getByUser(userId);
+            if (!Number.isInteger(userId) ||
+                userId <= 0) {
+                res.status(400).json({
+                    error: 'Usuario inválido'
+                });
+                return;
+            }
+            const notifications = await this.notificationService.getByUser(userId);
             res.json(notifications);
         }
         catch (error) {
@@ -21,11 +27,15 @@ class NotificationController {
     }
     async getNotifications(req, res) {
         try {
-            const userId = req.user?.userId;
-            console.log('notificationService:', this.notificationService);
-            const notifications = await this.notificationService
-                .getByUser(Number(userId));
-            console.log('notificationService:', this.notificationService);
+            const userId = Number(req.user?.userId);
+            if (!Number.isInteger(userId) ||
+                userId <= 0) {
+                res.status(401).json({
+                    error: 'Usuario no autenticado'
+                });
+                return;
+            }
+            const notifications = await this.notificationService.getByUser(userId);
             res.json(notifications);
         }
         catch (error) {
@@ -36,15 +46,38 @@ class NotificationController {
     }
     async create(req, res) {
         try {
-            const { userId, title, message, type, referenced_id } = req.body;
-            if (referenced_id == undefined || '' || "" || null) {
-                const notification = await this.notificationService.create(userId, title, message, type);
-                res.status(201).json(notification);
+            const userId = Number(req.user?.userId);
+            if (!Number.isInteger(userId) ||
+                userId <= 0) {
+                res.status(401).json({
+                    error: 'Usuario no autenticado'
+                });
+                return;
             }
-            else {
-                const notification = await this.notificationService.create(userId, title, message, type, referenced_id);
-                res.status(201).json(notification);
+            const { title, message, type, reference_id } = req.body;
+            if (typeof title !== 'string' ||
+                !title.trim()) {
+                res.status(400).json({
+                    error: 'El título es obligatorio'
+                });
+                return;
             }
+            if (typeof message !== 'string' ||
+                !message.trim()) {
+                res.status(400).json({
+                    error: 'El mensaje es obligatorio'
+                });
+                return;
+            }
+            if (typeof type !== 'string' ||
+                !type.trim()) {
+                res.status(400).json({
+                    error: 'El tipo es obligatorio'
+                });
+                return;
+            }
+            const notification = await this.notificationService.create(userId, title.trim(), message.trim(), type.trim(), reference_id);
+            res.status(201).json(notification);
         }
         catch (error) {
             res.status(500).json({
@@ -54,8 +87,23 @@ class NotificationController {
     }
     async markAsRead(req, res) {
         try {
-            await this.notificationService
-                .markAsRead(Number(req.params.id));
+            const userId = Number(req.user?.userId);
+            const notificationId = Number(req.params.id);
+            if (!Number.isInteger(userId) ||
+                userId <= 0) {
+                res.status(401).json({
+                    error: 'Usuario no autenticado'
+                });
+                return;
+            }
+            if (!Number.isInteger(notificationId) ||
+                notificationId <= 0) {
+                res.status(400).json({
+                    error: 'ID de notificación inválido'
+                });
+                return;
+            }
+            await this.notificationService.markAsRead(notificationId, userId);
             res.json({
                 message: 'Notification updated'
             });
@@ -68,9 +116,15 @@ class NotificationController {
     }
     async markAllAsRead(req, res) {
         try {
-            const userId = req.user?.userId;
-            await this.notificationService
-                .markAllAsRead(Number(userId));
+            const userId = Number(req.user?.userId);
+            if (!Number.isInteger(userId) ||
+                userId <= 0) {
+                res.status(401).json({
+                    error: 'Usuario no autenticado'
+                });
+                return;
+            }
+            await this.notificationService.markAllAsRead(userId);
             res.json({
                 message: 'All notifications updated'
             });
@@ -83,8 +137,15 @@ class NotificationController {
     }
     async countUnread(req, res) {
         try {
-            const total = await this.notificationService
-                .countUnread(Number(req.params.userId));
+            const userId = Number(req.user?.userId);
+            if (!Number.isInteger(userId) ||
+                userId <= 0) {
+                res.status(401).json({
+                    error: 'Usuario no autenticado'
+                });
+                return;
+            }
+            const total = await this.notificationService.countUnread(userId);
             res.json({
                 total
             });

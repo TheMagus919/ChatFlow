@@ -3,7 +3,7 @@ import { Notification } from '../models/Notification';
 import { getIO } from '../socket';
 
 export class NotificationService {
-  
+
   async getByUser(
     userId: number
   ): Promise<Notification[]> {
@@ -29,46 +29,36 @@ export class NotificationService {
     referenceId?: number
   ) {
 
-    const [result]: any =
-      await pool.query(
-        `
-        INSERT INTO notifications
-        (
-          user_id,
-          title,
-          message,
-          type,
-          reference_id
-        )
-        VALUES (?, ?, ?, ?, ?)
-        `,
-        [
-          userId,
-          title,
-          message,
-          type,
-          referenceId || null
-        ]
-      );
+    const [result]: any = await pool.query(
+      `
+      INSERT INTO notifications
+      (
+        user_id,
+        title,
+        message,
+        type,
+        reference_id
+      )
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [
+        userId,
+        title,
+        message,
+        type,
+        referenceId ?? null
+      ]
+    );
 
     const notification = {
-
       id: result.insertId,
-
       user_id: userId,
-
       title,
-
       message,
-
-      type: type,
-
+      type,
       is_read: false,
-      
-      reference_id: referenceId,
-
+      reference_id: referenceId ?? null,
       created_at: new Date()
-
     };
 
     getIO()
@@ -77,17 +67,13 @@ export class NotificationService {
         'new_notification',
         notification
       );
-    console.log(
-  '🔔 Emitiendo notificación a',
-  `user_${userId}`
-);
 
     return notification;
-
   }
 
   async markAsRead(
-    id: number
+    id: number,
+    userId: number
   ): Promise<void> {
 
     await pool.execute(
@@ -95,10 +81,13 @@ export class NotificationService {
       UPDATE notifications
       SET is_read = true
       WHERE id = ?
+        AND user_id = ?
       `,
-      [id]
+      [
+        id,
+        userId
+      ]
     );
-
   }
 
   async markAllAsRead(
@@ -113,25 +102,22 @@ export class NotificationService {
       `,
       [userId]
     );
-
   }
 
   async countUnread(
     userId: number
   ): Promise<number> {
 
-    const [rows]: any =
-      await pool.execute(
-        `
-        SELECT COUNT(*) as total
-        FROM notifications
-        WHERE user_id = ?
+    const [rows]: any = await pool.execute(
+      `
+      SELECT COUNT(*) AS total
+      FROM notifications
+      WHERE user_id = ?
         AND is_read = false
-        `,
-        [userId]
-      );
+      `,
+      [userId]
+    );
 
-    return rows[0].total;
+    return Number(rows[0]?.total ?? 0);
   }
-
 }

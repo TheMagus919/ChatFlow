@@ -622,6 +622,7 @@ async function handleSubscriptionUpdated(subscription: any): Promise<void> {
     UPDATE users
     SET
       subscription_plan = ?,
+      subscription = ?,
       subscription_status = ?,
       subscription_id = ?,
       customers_limit = ?,
@@ -629,6 +630,7 @@ async function handleSubscriptionUpdated(subscription: any): Promise<void> {
     WHERE id = ?
     `,
     [
+      planName,
       planName,
       status,
       subscription.id,

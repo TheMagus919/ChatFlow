@@ -98,8 +98,7 @@ export async function createCheckoutSession(
       },
     ],
 
-    success_url:
-      `${origin}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${origin}/pipeline?success=true&session_id={CHECKOUT_SESSION_ID}`,
 
     cancel_url:
       `${origin}/pricing?cancelled=true`,

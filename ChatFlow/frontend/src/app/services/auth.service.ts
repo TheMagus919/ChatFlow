@@ -1,6 +1,6 @@
 import { Injectable} from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { Inject, PLATFORM_ID } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { isPlatformBrowser } from '@angular/common';
@@ -64,7 +64,7 @@ export class AuthService {
 
         this.setToken(response.token);
 
-        localStorage.setItem(
+        this.setLocalStorageItem(
           'chatflow_user',
           JSON.stringify(response.user)
         );
@@ -116,6 +116,64 @@ export class AuthService {
     this.setLocalStorageItem('chatflow_token', token);
   }
 
+  getMe(): Observable<User> {
+    return this.http.get<{ user: User }>(`${this.apiUrl}/me`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      tap(response => {
+        const user = response.user;
+
+        this.setLocalStorageItem(
+          'chatflow_user',
+          JSON.stringify(user)
+        );
+
+        this.currentUserSubject.next(user);
+      }),
+      map(response => response.user)
+    );
+  }
+
+  updateProfile(
+    name: string,
+    email: string
+  ): Observable<User> {
+    return this.http.put<User>(
+      `${this.apiUrl}/me`,
+      {
+        name,
+        email
+      },
+      {
+        headers: this.getAuthHeaders()
+      }
+    ).pipe(
+      tap(user => {
+        this.setLocalStorageItem(
+          'chatflow_user',
+          JSON.stringify(user)
+        );
+
+        this.currentUserSubject.next(user);
+      })
+    );
+  }
+
+  changePassword(
+    currentPassword: string,
+    newPassword: string
+  ): Observable<any> {
+    return this.http.put(
+      `${this.apiUrl}/me/password`,
+      {
+        currentPassword,
+        newPassword
+      },
+      {
+        headers: this.getAuthHeaders()
+      }
+    );
+  }
   logout(): Observable<any> {
 
     this.removeLocalStorageItem(

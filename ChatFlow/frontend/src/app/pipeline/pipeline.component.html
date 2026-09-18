@@ -431,38 +431,359 @@
 
 </div>
 <!-- MODAL PERFIL -->
-<div
+ <div
   class="profile-overlay"
   *ngIf="showProfileModal"
 >
-
   <div class="profile-modal">
 
+    <!-- HEADER -->
     <div class="profile-header">
+      <div class="profile-header-content">
+        <div class="profile-avatar">
+          {{ userInitials || 'U' }}
+        </div>
 
-      <h2>
-        Mi Perfil
-      </h2>
+        <div>
+          <h2>Mi Perfil</h2>
+          <p>Gestioná tu información personal</p>
+        </div>
+      </div>
 
+      <button
+        class="profile-close-btn"
+        type="button"
+        (click)="closeProfileModal()"
+      >
+        ×
+      </button>
     </div>
 
+    <!-- CONTENIDO -->
     <div class="profile-content">
 
-      <p>
-        <strong>Nombre:</strong>
-        {{ currentUser.name }}
-      </p>
+      <!-- MENSAJE DE ÉXITO -->
+      <div
+        class="profile-message success"
+        *ngIf="profileMessage"
+      >
+        {{ profileMessage }}
+      </div>
 
-      <p>
-        <strong>Email:</strong>
-        {{ currentUser.email }}
-      </p>
+      <!-- MENSAJE DE ERROR -->
+      <div
+        class="profile-message error"
+        *ngIf="profileError"
+      >
+        {{ profileError }}
+      </div>
+
+      <!-- DATOS PERSONALES -->
+      <div class="profile-section">
+
+        <div class="profile-section-title">
+          <div class="section-icon">👤</div>
+
+          <div>
+            <h3>Datos personales</h3>
+            <p>Información de tu cuenta</p>
+          </div>
+        </div>
+
+        <!-- VISUALIZACIÓN -->
+        <ng-container *ngIf="!editProfileMode">
+
+          <div class="profile-info">
+
+            <div class="profile-field">
+              <span>Nombre</span>
+              <strong>{{ currentUser.name }}</strong>
+            </div>
+
+            <div class="profile-field">
+              <span>Email</span>
+              <strong>{{ currentUser.email }}</strong>
+            </div>
+
+          </div>
+
+          <button
+            type="button"
+            class="profile-primary-btn"
+            (click)="startEditProfile()"
+          >
+            ✏️ Editar perfil
+          </button>
+
+        </ng-container>
+
+        <!-- EDICIÓN -->
+        <ng-container *ngIf="editProfileMode">
+
+          <div class="profile-form">
+
+            <div class="form-group">
+              <label for="profileName">
+                Nombre
+              </label>
+
+              <input
+                id="profileName"
+                type="text"
+                [(ngModel)]="profileForm.name"
+                placeholder="Tu nombre"
+                maxlength="100"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="profileEmail">
+                Email
+              </label>
+
+              <input
+                id="profileEmail"
+                type="email"
+                [(ngModel)]="profileForm.email"
+                placeholder="tu@email.com"
+              />
+            </div>
+
+          </div>
+
+          <div class="profile-form-actions">
+
+            <button
+              type="button"
+              class="profile-secondary-btn"
+              (click)="cancelEditProfile()"
+              [disabled]="profileLoading"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="button"
+              class="profile-primary-btn"
+              (click)="saveProfile()"
+              [disabled]="profileLoading"
+            >
+              <span *ngIf="!profileLoading">
+                Guardar cambios
+              </span>
+
+              <span *ngIf="profileLoading">
+                Guardando...
+              </span>
+            </button>
+
+          </div>
+
+        </ng-container>
+
+      </div>
+
+      <!-- SEGURIDAD -->
+      <div class="profile-section">
+
+        <div class="profile-section-title">
+          <div class="section-icon">🔐</div>
+
+          <div>
+            <h3>Seguridad</h3>
+            <p>Protegé el acceso a tu cuenta</p>
+          </div>
+        </div>
+
+        <!-- BOTÓN CAMBIAR CONTRASEÑA -->
+        <ng-container *ngIf="!changePasswordMode">
+
+          <button
+            type="button"
+            class="profile-security-btn"
+            (click)="openChangePassword()"
+          >
+            <span>
+              <strong>Cambiar contraseña</strong>
+              <small>Actualizá tu contraseña de acceso</small>
+            </span>
+
+            <span class="profile-arrow">
+              →
+            </span>
+          </button>
+
+        </ng-container>
+
+        <!-- FORMULARIO CAMBIAR CONTRASEÑA -->
+        <ng-container *ngIf="changePasswordMode">
+
+          <div
+            class="profile-message success"
+            *ngIf="passwordMessage"
+          >
+            {{ passwordMessage }}
+          </div>
+
+          <div
+            class="profile-message error"
+            *ngIf="passwordError"
+          >
+            {{ passwordError }}
+          </div>
+
+          <div class="profile-form">
+
+            <div class="form-group">
+              <label for="currentPassword">
+                Contraseña actual
+              </label>
+
+              <input
+                id="currentPassword"
+                type="password"
+                [(ngModel)]="passwordForm.currentPassword"
+                placeholder="Ingresá tu contraseña actual"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="newPassword">
+                Nueva contraseña
+              </label>
+
+              <input
+                id="newPassword"
+                type="password"
+                [(ngModel)]="passwordForm.newPassword"
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="confirmPassword">
+                Confirmar nueva contraseña
+              </label>
+
+              <input
+                id="confirmPassword"
+                type="password"
+                [(ngModel)]="passwordForm.confirmPassword"
+                placeholder="Repetí la nueva contraseña"
+              />
+            </div>
+
+          </div>
+
+          <div class="profile-form-actions">
+
+            <button
+              type="button"
+              class="profile-secondary-btn"
+              (click)="cancelChangePassword()"
+              [disabled]="passwordLoading"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="button"
+              class="profile-primary-btn"
+              (click)="savePassword()"
+              [disabled]="passwordLoading"
+            >
+              <span *ngIf="!passwordLoading">
+                Cambiar contraseña
+              </span>
+
+              <span *ngIf="passwordLoading">
+                Cambiando...
+              </span>
+            </button>
+
+          </div>
+
+        </ng-container>
+
+      </div>
+
+      <!-- PLAN -->
+      <div class="profile-section">
+        <div class="profile-section-title">
+          <div class="section-icon">💳</div>
+
+          <div>
+            <h3>Tu plan</h3>
+            <p>Información de tu suscripción</p>
+          </div>
+        </div>
+
+        <div class="profile-plan">
+          <div class="profile-plan-main">
+            <span class="plan-label">Plan actual</span>
+
+            <strong>{{ subscriptionPlanName }}</strong>
+
+            <span
+              class="profile-plan-status"
+              *ngIf="subscriptionPlan !== 'free'"
+            >
+              {{ subscriptionStatusName }}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            class="profile-plan-btn"
+            (click)="goToPricing()"
+          >
+            Ver planes
+          </button>
+        </div>
+
+        <div
+          class="profile-usage"
+          *ngIf="!subscriptionLoading"
+        >
+          <div class="profile-usage-header">
+            <span>Clientes utilizados</span>
+
+            <strong>
+              {{ customersUsed }} / {{ customersLimit }}
+            </strong>
+          </div>
+
+          <div class="profile-progress">
+            <div
+              class="profile-progress-bar"
+              [style.width.%]="customersUsagePercentage"
+            ></div>
+          </div>
+
+          <small>
+            {{ customersUsagePercentage }}% del límite utilizado
+          </small>
+        </div>
+
+        <div
+          class="profile-renewal"
+          *ngIf="formattedRenewalDate && subscriptionPlan !== 'free'"
+        >
+          <span>📅</span>
+          <span>
+            Renovación:
+            <strong>{{ formattedRenewalDate }}</strong>
+          </span>
+        </div>
+      </div>
 
     </div>
 
+    <!-- FOOTER -->
     <div class="profile-footer">
 
       <button
+        type="button"
         class="cancel-btn"
         (click)="closeProfileModal()"
       >
@@ -472,5 +793,4 @@
     </div>
 
   </div>
-
 </div>

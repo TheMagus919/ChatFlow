@@ -28,14 +28,15 @@ import { ConversationsComponent } from '../components/conversation/conversation.
 import { NotificationService } from '../services/notification.service';
 import { Notification } from '../interfaces/notification.interface';
 import { ChatService } from '../services/chat.service';
-
+import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-pipeline',
   standalone: true,
   imports: [
     CommonModule,
     DragDropModule,
-    RouterLink
+    RouterLink,
+    FormsModule
   ],
   templateUrl: './pipeline.component.html',
   styleUrls: ['./pipeline.component.scss']
@@ -54,19 +55,50 @@ export class PipelineComponent implements OnInit {
   showNotifications = false;
 
   showProfileModal = false;
+  editProfileMode = false;
 
+  profileForm = {
+    name: '',
+    email: ''
+  };
+
+  profileLoading = false;
+  profileMessage = '';
+  profileError = '';
+
+  changePasswordMode = false;
+
+  passwordForm = {
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  };
+
+  passwordLoading = false;
+  passwordMessage = '';
+  passwordError = '';
   unreadNotifications = 0;
 
   notifications: Notification[] = [];
 
   currentUser: {
+    id: number;
     name: string;
     email: string;
+    subscription: 'free' | 'pro' | 'business';
   } = {
+    id: 0,
     name: '',
-    email: ''
+    email: '',
+    subscription: 'free'
   };
 
+  subscriptionPlan = 'free';
+  subscriptionStatus = 'inactive';
+  customersLimit = 10;
+  customersUsed = 0;
+  renewalDate: string | null = null;
+  subscriptionLoading = false;
   private apiUrl = `${environment.apiUrl}/customers`;
   
   @ViewChild('notificationsContainer')
@@ -84,21 +116,15 @@ export class PipelineComponent implements OnInit {
   ngOnInit(): void {
     this.authService.currentUser$
     .subscribe(user => {
+      console.log('CURRENT USER', user);
 
-      console.log(
-        'CURRENT USER',
-        user
-      );
-
-      if(user){
-        this.currentUser = user;
-        this.chatService
-          .joinUserRoom(
-            user.id
-          );
-
+      if (!user || !user.id) {
+        return;
       }
 
+      this.currentUser = user;
+
+      this.chatService.joinUserRoom(user.id);
     });
     this.loadPipeline();
     this.loadNotifications();
@@ -135,8 +161,6 @@ export class PipelineComponent implements OnInit {
   loadPipeline(): void {
   const token = this.authService.getToken();
 
-  console.log('PIPELINE TOKEN:', token);
-
   this.http.get<any[]>(
     `${this.apiUrl}/pipeline`,
     {
@@ -163,7 +187,10 @@ export class PipelineComponent implements OnInit {
           this.closedCustomers.push(customer);
         }
       });
-
+      this.customersUsed =
+        this.newCustomers.length +
+        this.inProgressCustomers.length +
+        this.closedCustomers.length;
       this.updateStats();
       this.cdr.detectChanges();
     },
@@ -294,20 +321,314 @@ export class PipelineComponent implements OnInit {
 
   }
 
-  //NOTIFICACIONES Y USUARIO
+  //NOTIFICACIONES Y PERFIL USUARIO
+  goToPricing(): void {
+    this.router.navigate(['/pricing']);
+  }
   toggleNotifications(): void {
     this.showNotifications =
       !this.showNotifications;
   }
 
   openProfileModal(): void {
-    this.showProfileModal = true;
-    this.disableScroll();
+    this.profileLoading = true;
+    this.profileError = '';
+    this.profileMessage = '';
+    this.authService.getMe().subscribe({
+      next: (user) => {
+        this.currentUser = user;
+        this.loadCurrentSubscription();
+        this.profileForm = {
+          name: user.name,
+          email: user.email
+        };
+
+        this.editProfileMode = false;
+        this.profileLoading = false;
+
+        this.showProfileModal = true;
+        this.disableScroll();
+
+        this.cdr.detectChanges();
+      },
+
+      error: (err) => {
+        this.profileLoading = false;
+
+        this.profileError =
+          err?.error?.message ||
+          'No se pudieron cargar los datos del perfil.';
+
+        this.showProfileModal = true;
+        this.disableScroll();
+
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   closeProfileModal(): void {
     this.showProfileModal = false;
     this.enableScroll();
+  }
+  startEditProfile(): void {
+    this.profileForm = {
+      name: this.currentUser.name,
+      email: this.currentUser.email
+    };
+
+    this.editProfileMode = true;
+    this.profileMessage = '';
+    this.profileError = '';
+  }
+
+  cancelEditProfile(): void {
+    this.profileForm = {
+      name: this.currentUser.name,
+      email: this.currentUser.email
+    };
+
+    this.editProfileMode = false;
+    this.profileMessage = '';
+    this.profileError = '';
+  }
+
+  saveProfile(): void {
+    const name = this.profileForm.name.trim();
+    const email = this.profileForm.email.trim();
+
+    if (name.length < 2) {
+      this.profileError = 'El nombre debe tener al menos 2 caracteres.';
+      this.profileMessage = '';
+      return;
+    }
+
+    if (name.length > 100) {
+      this.profileError = 'El nombre no puede superar los 100 caracteres.';
+      this.profileMessage = '';
+      return;
+    }
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.profileError = 'Ingresá un email válido.';
+      this.profileMessage = '';
+      return;
+    }
+
+    this.profileLoading = true;
+    this.profileError = '';
+    this.profileMessage = '';
+
+    this.authService.updateProfile(name, email).subscribe({
+      next: (user) => {
+        this.currentUser = user;
+
+        this.profileForm = {
+          name: user.name,
+          email: user.email
+        };
+
+        this.editProfileMode = false;
+        this.profileLoading = false;
+        this.profileMessage = 'Perfil actualizado correctamente.';
+
+        this.cdr.detectChanges();
+      },
+
+      error: (err) => {
+        this.profileLoading = false;
+
+        this.profileError =
+          err?.error?.message ||
+          'No se pudo actualizar el perfil.';
+
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  openChangePassword(): void {
+    this.changePasswordMode = true;
+
+    this.passwordForm = {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    };
+
+    this.passwordMessage = '';
+    this.passwordError = '';
+  }
+
+  cancelChangePassword(): void {
+    this.changePasswordMode = false;
+
+    this.passwordForm = {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    };
+
+    this.passwordMessage = '';
+    this.passwordError = '';
+  }
+
+  savePassword(): void {
+    const currentPassword =
+      this.passwordForm.currentPassword.trim();
+
+    const newPassword =
+      this.passwordForm.newPassword.trim();
+
+    const confirmPassword =
+      this.passwordForm.confirmPassword.trim();
+
+    this.passwordError = '';
+    this.passwordMessage = '';
+
+    if (!currentPassword) {
+      this.passwordError =
+        'Ingresá tu contraseña actual.';
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      this.passwordError =
+        'La nueva contraseña debe tener al menos 6 caracteres.';
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      this.passwordError =
+        'Las contraseñas nuevas no coinciden.';
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      this.passwordError =
+        'La nueva contraseña debe ser diferente a la actual.';
+      return;
+    }
+
+    this.passwordLoading = true;
+
+    this.authService
+      .changePassword(currentPassword, newPassword)
+      .subscribe({
+        next: () => {
+          this.passwordLoading = false;
+
+          this.passwordMessage =
+            'Contraseña actualizada correctamente.';
+
+          this.passwordForm = {
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+          };
+
+          this.cdr.detectChanges();
+        },
+
+        error: (err) => {
+          this.passwordLoading = false;
+
+          this.passwordError =
+            err?.error?.message ||
+            'No se pudo cambiar la contraseña.';
+
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  loadCurrentSubscription(): void {
+    this.subscriptionLoading = true;
+
+    this.http.get<any>(
+      `${environment.apiUrl}/subscriptions/current`,
+      {
+        headers: {
+          Authorization: `Bearer ${this.authService.getToken() || ''}`
+        }
+      }
+    ).subscribe({
+      next: (response) => {
+        this.subscriptionPlan = response.plan || 'free';
+        this.subscriptionStatus = response.status || 'inactive';
+        this.customersLimit = Number(response.customersLimit) || 10;
+        this.renewalDate = response.renewalDate || null;
+        this.subscriptionLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.subscriptionLoading = false;
+        this.subscriptionPlan = this.currentUser.subscription || 'free';
+        this.customersLimit = 10;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  get subscriptionPlanName(): string {
+    switch (this.subscriptionPlan) {
+      case 'pro':
+        return 'Pro';
+
+      case 'business':
+        return 'Business';
+
+      default:
+        return 'Gratis';
+    }
+  }
+
+  get customersUsagePercentage(): number {
+    if (this.customersLimit <= 0) {
+      return 0;
+    }
+
+    return Math.min(
+      100,
+      Math.round((this.customersUsed / this.customersLimit) * 100)
+    );
+  }
+
+  get subscriptionStatusName(): string {
+    switch (this.subscriptionStatus) {
+      case 'active':
+        return 'Activa';
+
+      case 'cancelled':
+        return 'Cancelada';
+
+      case 'past_due':
+        return 'Pago pendiente';
+
+      case 'inactive':
+        return 'Sin suscripción';
+
+      default:
+        return this.subscriptionStatus;
+    }
+  }
+
+  get formattedRenewalDate(): string {
+    if (!this.renewalDate) {
+      return '';
+    }
+
+    const date = new Date(this.renewalDate);
+
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    return date.toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   }
 
   get userInitials(): string {

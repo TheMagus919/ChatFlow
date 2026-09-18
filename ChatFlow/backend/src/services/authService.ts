@@ -33,6 +33,11 @@ export interface LoginResponse {
   token: string;
 }
 
+export interface UpdateProfileData {
+  name: string;
+  email: string;
+}
+
 export class AuthService {
 
   async register(
@@ -70,7 +75,8 @@ export class AuthService {
     const insertId = (insertResult as any).insertId;
 
     const [userResult] = await pool.execute(
-      `SELECT
+      `
+      SELECT
         id,
         email,
         password,
@@ -79,8 +85,9 @@ export class AuthService {
         is_active,
         created_at,
         updated_at
-       FROM users
-       WHERE id = ?`,
+      FROM users
+      WHERE id = ?
+      `,
       [insertId]
     ) as any;
 
@@ -99,7 +106,8 @@ export class AuthService {
     const normalizedEmail = email.trim().toLowerCase();
 
     const [userResult] = await pool.execute(
-      `SELECT
+      `
+      SELECT
         id,
         email,
         password,
@@ -108,9 +116,10 @@ export class AuthService {
         is_active,
         created_at,
         updated_at
-       FROM users
-       WHERE email = ?
-       LIMIT 1`,
+      FROM users
+      WHERE email = ?
+      LIMIT 1
+      `,
       [normalizedEmail]
     ) as any;
 
@@ -128,7 +137,7 @@ export class AuthService {
     if (!passwordValid) {
       throw new Error('Credenciales inválidas');
     }
-    
+
     const token = jwt.sign(
       {
         userId: user.id,
@@ -155,10 +164,13 @@ export class AuthService {
     };
   }
 
-  async findById(userId: number): Promise<User | null> {
+  async findById(
+    userId: number
+  ): Promise<User | null> {
 
     const [userResult] = await pool.execute(
-      `SELECT
+      `
+      SELECT
         id,
         email,
         name,
@@ -166,12 +178,135 @@ export class AuthService {
         is_active,
         created_at,
         updated_at
-       FROM users
-       WHERE id = ?
-       LIMIT 1`,
+      FROM users
+      WHERE id = ?
+      LIMIT 1
+      `,
       [userId]
     ) as any;
 
     return userResult[0] || null;
+  }
+
+  async updateProfile(
+    userId: number,
+    data: UpdateProfileData
+  ): Promise<User> {
+
+    const normalizedEmail =
+      data.email.trim().toLowerCase();
+
+    const normalizedName =
+      data.name.trim();
+
+    const [existingUsers] = await pool.execute(
+      `
+      SELECT id
+      FROM users
+      WHERE email = ?
+        AND id <> ?
+      LIMIT 1
+      `,
+      [
+        normalizedEmail,
+        userId
+      ]
+    ) as any;
+
+    if (existingUsers.length > 0) {
+      throw new Error('El email ya está registrado');
+    }
+
+    const [result] = await pool.execute(
+      `
+      UPDATE users
+      SET
+        name = ?,
+        email = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+      `,
+      [
+        normalizedName,
+        normalizedEmail,
+        userId
+      ]
+    ) as any;
+
+    if (result.affectedRows === 0) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    const updatedUser = await this.findById(userId);
+
+    if (!updatedUser) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    return updatedUser;
+  }
+
+  async changePassword(
+    userId: number,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> {
+
+    const [userResult] = await pool.execute(
+      `
+      SELECT
+        id,
+        password
+      FROM users
+      WHERE id = ?
+      LIMIT 1
+      `,
+      [userId]
+    ) as any;
+
+    const user = userResult[0];
+
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    const passwordValid = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+    if (!passwordValid) {
+      throw new Error('La contraseña actual es incorrecta');
+    }
+
+    const samePassword = await bcrypt.compare(
+      newPassword,
+      user.password
+    );
+
+    if (samePassword) {
+      throw new Error(
+        'La nueva contraseña debe ser diferente a la actual'
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(
+      newPassword,
+      SALT_ROUNDS
+    );
+
+    await pool.execute(
+      `
+      UPDATE users
+      SET
+        password = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+      `,
+      [
+        hashedPassword,
+        userId
+      ]
+    );
   }
 }

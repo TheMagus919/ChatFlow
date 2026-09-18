@@ -37,24 +37,19 @@ export interface SubscriptionResponse {
 // ==================== PLAN LIMITS ====================
 
 export const PLAN_LIMITS: Record<string, number> = {
-  starter: 100,
-  pro: 1000,
-  enterprise: 10000,
+  business: 1000,
+  pro: 100,
   free: 10,
 };
 
 export const PLAN_NAMES: Record<string, string> = {};
 
-if (process.env.STRIPE_PRICE_STARTER) {
-  PLAN_NAMES[process.env.STRIPE_PRICE_STARTER] = 'starter';
-}
-
 if (process.env.STRIPE_PRICE_PRO) {
   PLAN_NAMES[process.env.STRIPE_PRICE_PRO] = 'pro';
 }
 
-if (process.env.STRIPE_PRICE_ENTERPRISE) {
-  PLAN_NAMES[process.env.STRIPE_PRICE_ENTERPRISE] = 'enterprise';
+if (process.env.STRIPE_PRICE_BUSINESS) {
+  PLAN_NAMES[process.env.STRIPE_PRICE_BUSINESS] = 'business';
 }
 
 // ==================== WEBHOOK EVENTS ====================
