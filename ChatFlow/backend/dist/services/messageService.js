@@ -7,92 +7,6 @@ exports.simulateIncoming = exports.markAsDelivered = exports.getMessagesByConver
 const database_1 = __importDefault(require("../config/database"));
 const socket_1 = require("../socket");
 const notificationService_1 = require("./notificationService");
-/*
-export const sendMessage = async ({
-  content,
-  customerId,
-  conversationId,
-  userId
-}: SendMessageDTO) => {
-
-  // Verificar que la conversación y el cliente
-  // pertenezcan al usuario autenticado
-  const [conversations]: any = await pool.query(
-    `
-    SELECT c.id
-    FROM conversations c
-    INNER JOIN customers cu ON cu.id = c.customer_id
-    WHERE c.id = ?
-      AND c.users_id = ?
-      AND c.customer_id = ?
-      AND cu.user_id = ?
-    LIMIT 1
-    `,
-    [
-      conversationId,
-      userId,
-      customerId,
-      userId
-    ]
-  );
-
-  if (!conversations.length) {
-    throw new Error('CONVERSATION_NOT_FOUND');
-  }
-
-  const [result]: any = await pool.query(
-    `
-    INSERT INTO messages
-    (
-      content,
-      customer_id,
-      conversation_id,
-      direction
-    )
-    VALUES (?, ?, ?, 'outgoing')
-    `,
-    [
-      content,
-      customerId,
-      conversationId
-    ]
-  );
-
-  await pool.query(
-    `
-    UPDATE conversations
-    SET
-      last_message = ?,
-      last_message_at = NOW()
-    WHERE id = ?
-      AND users_id = ?
-    `,
-    [
-      content,
-      conversationId,
-      userId
-    ]
-  );
-
-  const message = {
-    id: result.insertId,
-    content,
-    customerId,
-    conversationId,
-    direction: 'outgoing',
-    created_at: new Date()
-  };
-
-  const io = getIO();
-
-  io.to(`conversation_${conversationId}`).emit(
-    'new_message',
-    message
-  );
-
-  return message;
-};
-*/
 const sendMessage = async ({ content, customerId, conversationId, userId }) => {
     const connection = await database_1.default.getConnection();
     try {
@@ -232,34 +146,97 @@ const markAsDelivered = async (messageId, userId) => {
 };
 exports.markAsDelivered = markAsDelivered;
 const simulateIncoming = async ({ content, customerId, conversationId }, userId) => {
-    // Verificar que la conversación y el cliente
-    // pertenezcan al usuario autenticado
-    const [conversations] = await database_1.default.query(`
-    SELECT
-      c.id,
-      c.users_id,
-      cu.user_id,
-      cu.name
-    FROM conversations c
-    INNER JOIN customers cu
-      ON cu.id = c.customer_id
-    INNER JOIN users u
-      ON u.id = c.users_id
-    WHERE c.id = ?
-      AND c.users_id = ?
-      AND c.customer_id = ?
-      AND cu.user_id = ?
-    LIMIT 1
-    `, [
-        conversationId,
-        userId,
-        customerId,
-        userId
-    ]);
-    if (!conversations.length) {
-        throw new Error('CONVERSATION_NOT_FOUND');
+    // Buscar conversación existente.
+    let conversations;
+    if (conversationId) {
+        const [rows] = await database_1.default.query(`
+      SELECT
+        c.id,
+        c.users_id,
+        cu.user_id,
+        cu.name
+      FROM conversations c
+      INNER JOIN customers cu
+        ON cu.id = c.customer_id
+      INNER JOIN users u
+        ON u.id = c.users_id
+      WHERE c.id = ?
+        AND c.users_id = ?
+        AND c.customer_id = ?
+        AND cu.user_id = ?
+      LIMIT 1
+      `, [
+            conversationId,
+            userId,
+            customerId,
+            userId
+        ]);
+        conversations = rows;
     }
-    const nombre = conversations[0].name;
+    else {
+        const [rows] = await database_1.default.query(`
+      SELECT
+        c.id,
+        c.users_id,
+        cu.user_id,
+        cu.name
+      FROM conversations c
+      INNER JOIN customers cu
+        ON cu.id = c.customer_id
+      INNER JOIN users u
+        ON u.id = c.users_id
+      WHERE c.users_id = ?
+        AND c.customer_id = ?
+        AND cu.user_id = ?
+      LIMIT 1
+      `, [
+            userId,
+            customerId,
+            userId
+        ]);
+        conversations = rows;
+    }
+    // Si no existe conversación, crearla.
+    if (!conversations.length) {
+        // Verificar que el cliente pertenezca al usuario.
+        const [customers] = await database_1.default.query(`
+      SELECT id, name
+      FROM customers
+      WHERE id = ?
+        AND user_id = ?
+      LIMIT 1
+      `, [
+            customerId,
+            userId
+        ]);
+        if (!customers.length) {
+            throw new Error('CUSTOMER_NOT_FOUND');
+        }
+        const [conversationResult] = await database_1.default.query(`
+      INSERT INTO conversations
+      (
+        customer_id,
+        users_id,
+        last_message,
+        last_message_at
+      )
+      VALUES (?, ?, ?, NOW())
+      `, [
+            customerId,
+            userId,
+            content
+        ]);
+        conversations = [
+            {
+                id: conversationResult.insertId,
+                users_id: userId,
+                user_id: userId,
+                name: customers[0].name
+            }
+        ];
+    }
+    const conversation = conversations[0];
+    const nombre = conversation.name;
     const [result] = await database_1.default.query(`
     INSERT INTO messages
     (
@@ -273,18 +250,19 @@ const simulateIncoming = async ({ content, customerId, conversationId }, userId)
     `, [
         content,
         customerId,
-        conversationId
+        conversation.id
     ]);
     const message = {
         id: result.insertId,
         content,
         customerId,
-        conversationId,
+        conversationId: conversation.id,
         direction: 'incoming',
         status: 'delivered',
         created_at: new Date(),
         delivered_at: new Date()
     };
+    // Actualizar última actividad de la conversación.
     await database_1.default.query(`
     UPDATE conversations
     SET
@@ -294,12 +272,13 @@ const simulateIncoming = async ({ content, customerId, conversationId }, userId)
       AND users_id = ?
     `, [
         content,
-        conversationId,
+        conversation.id,
         userId
     ]);
+    // Enviar mensaje por Socket.IO.
     const io = (0, socket_1.getIO)();
-    io.to(`conversation_${conversationId}`).emit('new_message', message);
-    // Crear notificación
+    io.to(`conversation_${conversation.id}`).emit('new_message', message);
+    // Crear notificación.
     const notificationService = new notificationService_1.NotificationService();
     const mensaje = `${nombre} te envio un mensaje.`;
     await notificationService.create(userId, 'Nuevo mensaje', mensaje, 'message', customerId);

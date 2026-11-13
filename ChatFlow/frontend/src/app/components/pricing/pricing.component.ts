@@ -55,7 +55,7 @@ export class PricingComponent {
     this.loadCurrentPlan();
   }
 
-  async loadPlans() {
+  async loadPlans(): Promise<void> {
     try {
       const response = await firstValueFrom(
         this.subscriptionService.getPlans()
@@ -66,9 +66,18 @@ export class PricingComponent {
       this.plans = response?.plans ?? [];
 
       console.log('ARRAY PLANS:', this.plans);
+
     } catch (error) {
+
       console.error('ERROR CARGANDO PLANES:', error);
+
       this.plans = [];
+
+    } finally {
+
+      this.plansLoading = false;
+      this.updateLoadingState();
+
     }
   }
 

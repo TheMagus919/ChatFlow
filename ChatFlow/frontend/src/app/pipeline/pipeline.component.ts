@@ -323,6 +323,7 @@ export class PipelineComponent implements OnInit {
 
   //NOTIFICACIONES Y PERFIL USUARIO
   goToPricing(): void {
+    this.enableScroll();
     this.router.navigate(['/pricing']);
   }
   toggleNotifications(): void {

@@ -203,7 +203,7 @@ export const simulateIncoming = async (
 
   try {
 
-    const userId = 4;//req.user?.userId;
+    const userId = Number(req.body.userId);
 
     if (!userId) {
       return res.status(401).json({

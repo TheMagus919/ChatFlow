@@ -33,4 +33,6 @@ export interface IncomingMessageDTO {
   customerId: number;
 
   conversationId: number;
+
+  userId: number;
 }

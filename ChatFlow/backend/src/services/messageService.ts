@@ -220,39 +220,118 @@ export const simulateIncoming = async (
   userId: number
 ) => {
 
-  // Verificar que la conversación y el cliente
-  // pertenezcan al usuario autenticado
-  const [conversations]: any = await pool.query(
-    `
-    SELECT
-      c.id,
-      c.users_id,
-      cu.user_id,
-      cu.name
-    FROM conversations c
-    INNER JOIN customers cu
-      ON cu.id = c.customer_id
-    INNER JOIN users u
-      ON u.id = c.users_id
-    WHERE c.id = ?
-      AND c.users_id = ?
-      AND c.customer_id = ?
-      AND cu.user_id = ?
-    LIMIT 1
-    `,
-    [
-      conversationId,
-      userId,
-      customerId,
-      userId
-    ]
-  );
+  // Buscar conversación existente.
+  let conversations: any[];
 
-  if (!conversations.length) {
-    throw new Error('CONVERSATION_NOT_FOUND');
+  if (conversationId) {
+    const [rows]: any = await pool.query(
+      `
+      SELECT
+        c.id,
+        c.users_id,
+        cu.user_id,
+        cu.name
+      FROM conversations c
+      INNER JOIN customers cu
+        ON cu.id = c.customer_id
+      INNER JOIN users u
+        ON u.id = c.users_id
+      WHERE c.id = ?
+        AND c.users_id = ?
+        AND c.customer_id = ?
+        AND cu.user_id = ?
+      LIMIT 1
+      `,
+      [
+        conversationId,
+        userId,
+        customerId,
+        userId
+      ]
+    );
+
+    conversations = rows;
+  } else {
+    const [rows]: any = await pool.query(
+      `
+      SELECT
+        c.id,
+        c.users_id,
+        cu.user_id,
+        cu.name
+      FROM conversations c
+      INNER JOIN customers cu
+        ON cu.id = c.customer_id
+      INNER JOIN users u
+        ON u.id = c.users_id
+      WHERE c.users_id = ?
+        AND c.customer_id = ?
+        AND cu.user_id = ?
+      LIMIT 1
+      `,
+      [
+        userId,
+        customerId,
+        userId
+      ]
+    );
+
+    conversations = rows;
   }
 
-  const nombre = conversations[0].name;
+  // Si no existe conversación, crearla.
+  if (!conversations.length) {
+
+    // Verificar que el cliente pertenezca al usuario.
+    const [customers]: any = await pool.query(
+      `
+      SELECT id, name
+      FROM customers
+      WHERE id = ?
+        AND user_id = ?
+      LIMIT 1
+      `,
+      [
+        customerId,
+        userId
+      ]
+    );
+
+    if (!customers.length) {
+      throw new Error('CUSTOMER_NOT_FOUND');
+    }
+
+    const [conversationResult]: any = await pool.query(
+      `
+      INSERT INTO conversations
+      (
+        customer_id,
+        users_id,
+        last_message,
+        last_message_at
+      )
+      VALUES (?, ?, ?, NOW())
+      `,
+      [
+        customerId,
+        userId,
+        content
+      ]
+    );
+
+    conversations = [
+      {
+        id: conversationResult.insertId,
+        users_id: userId,
+        user_id: userId,
+        name: customers[0].name
+      }
+    ];
+  }
+
+  const conversation = conversations[0];
+
+  const nombre = conversation.name;
 
   const [result]: any = await pool.query(
     `
@@ -269,7 +348,7 @@ export const simulateIncoming = async (
     [
       content,
       customerId,
-      conversationId
+      conversation.id
     ]
   );
 
@@ -277,13 +356,14 @@ export const simulateIncoming = async (
     id: result.insertId,
     content,
     customerId,
-    conversationId,
+    conversationId: conversation.id,
     direction: 'incoming',
     status: 'delivered',
     created_at: new Date(),
     delivered_at: new Date()
   };
 
+  // Actualizar última actividad de la conversación.
   await pool.query(
     `
     UPDATE conversations
@@ -295,19 +375,20 @@ export const simulateIncoming = async (
     `,
     [
       content,
-      conversationId,
+      conversation.id,
       userId
     ]
   );
 
+  // Enviar mensaje por Socket.IO.
   const io = getIO();
 
-  io.to(`conversation_${conversationId}`).emit(
+  io.to(`conversation_${conversation.id}`).emit(
     'new_message',
     message
   );
 
-  // Crear notificación
+  // Crear notificación.
   const notificationService =
     new NotificationService();
 

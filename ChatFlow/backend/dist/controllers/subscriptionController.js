@@ -451,12 +451,14 @@ async function handleSubscriptionUpdated(subscription) {
     UPDATE users
     SET
       subscription_plan = ?,
+      subscription = ?,
       subscription_status = ?,
       subscription_id = ?,
       customers_limit = ?,
       updated_at = NOW()
     WHERE id = ?
     `, [
+        planName,
         planName,
         status,
         subscription.id,
