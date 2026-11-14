@@ -25,8 +25,8 @@ export class LandingComponent {
   ];
 
   readonly plans = [
-    { name: 'Free', limit: '10', description: 'Para comenzar a organizar tus contactos.' },
+    { name: 'Free', limit: '10', description: 'Para comenzar a organizar tus contactos.', featured: false },
     { name: 'Pro', limit: '100', description: 'Para negocios que quieren crecer y ordenar más conversaciones.', featured: true },
-    { name: 'Business', limit: '1.000', description: 'Para equipos y negocios con un mayor volumen de contactos.' }
+    { name: 'Business', limit: '1.000', description: 'Para equipos y negocios con un mayor volumen de contactos.', featured: false }
   ];
 }
