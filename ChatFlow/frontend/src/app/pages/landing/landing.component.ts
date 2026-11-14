@@ -9,27 +9,13 @@ import { RouterLink } from '@angular/router';
   styleUrl: './landing.component.scss'
 })
 export class LandingComponent {
+  readonly currentYear = new Date().getFullYear();
+
   readonly features = [
-    {
-      icon: 'forum',
-      title: 'Todas tus conversaciones en un solo lugar',
-      description: 'Centralizá los contactos de tu negocio y mantené cada conversación organizada.'
-    },
-    {
-      icon: 'view_kanban',
-      title: 'Visualizá tu proceso de ventas',
-      description: 'Seguí cada oportunidad desde el primer contacto hasta el cierre.'
-    },
-    {
-      icon: 'sell',
-      title: 'Organizá con etiquetas',
-      description: 'Clasificá tus clientes para encontrar rápidamente la información que necesitás.'
-    },
-    {
-      icon: 'insights',
-      title: 'Medí tus resultados',
-      description: 'Consultá estadísticas para entender cómo avanza tu negocio.'
-    }
+    { icon: 'forum', title: 'Todas tus conversaciones en un solo lugar', description: 'Centralizá los contactos de tu negocio y mantené cada conversación organizada.' },
+    { icon: 'view_kanban', title: 'Visualizá tu proceso de ventas', description: 'Seguí cada oportunidad desde el primer contacto hasta el cierre.' },
+    { icon: 'sell', title: 'Organizá con etiquetas', description: 'Clasificá tus clientes para encontrar rápidamente la información que necesitás.' },
+    { icon: 'insights', title: 'Medí tus resultados', description: 'Consultá estadísticas para entender cómo avanza tu negocio.' }
   ];
 
   readonly steps = [
