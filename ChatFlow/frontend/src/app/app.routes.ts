@@ -8,9 +8,12 @@ import { PricingComponent } from './components/pricing/pricing.component';
 import { ConversationsComponent } from './components/conversation/conversation.component';
 import { TagsComponent } from './components/tags/tags.component';
 import { StatisticsComponent } from './components/stats/statistics.component';
+import { LandingComponent } from './pages/landing/landing.component';
+
 export const routes: Routes = [
+  { path: '', component: LandingComponent, pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegisterComponent }, 
+  { path: 'register', component: RegisterComponent },
   { path: 'pipeline', component: PipelineComponent, canActivate: [authGuard] },
   { path: 'pricing', component: PricingComponent, canActivate: [authGuard] },
   { path: 'conversations/:customerId', component: ConversationsComponent, canActivate: [authGuard] },
@@ -18,6 +21,5 @@ export const routes: Routes = [
   { path: 'customers', component: CustomerListComponent, canActivate: [authGuard] },
   { path: 'stats', component: StatisticsComponent, canActivate: [authGuard] },
   { path: 'tags', component: TagsComponent, canActivate: [authGuard] },
-  { path: '', redirectTo: '/pipeline', pathMatch: 'full' },
-  { path: '**', redirectTo: '/pipeline' }
+  { path: '**', redirectTo: '/' }
 ];
