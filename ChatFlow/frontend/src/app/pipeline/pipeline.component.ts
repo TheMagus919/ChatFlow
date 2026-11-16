@@ -396,22 +396,17 @@ export class PipelineComponent implements OnInit {
 
   saveProfile(): void {
     const name = this.profileForm.name.trim();
-    const email = this.profileForm.email.trim();
 
     if (name.length < 2) {
-      this.profileError = 'El nombre debe tener al menos 2 caracteres.';
+      this.profileError =
+        'El nombre debe tener al menos 2 caracteres.';
       this.profileMessage = '';
       return;
     }
 
     if (name.length > 100) {
-      this.profileError = 'El nombre no puede superar los 100 caracteres.';
-      this.profileMessage = '';
-      return;
-    }
-
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      this.profileError = 'Ingresá un email válido.';
+      this.profileError =
+        'El nombre no puede superar los 100 caracteres.';
       this.profileMessage = '';
       return;
     }
@@ -420,7 +415,7 @@ export class PipelineComponent implements OnInit {
     this.profileError = '';
     this.profileMessage = '';
 
-    this.authService.updateProfile(name, email).subscribe({
+    this.authService.updateProfile(name).subscribe({
       next: (user) => {
         this.currentUser = user;
 
@@ -431,7 +426,8 @@ export class PipelineComponent implements OnInit {
 
         this.editProfileMode = false;
         this.profileLoading = false;
-        this.profileMessage = 'Perfil actualizado correctamente.';
+        this.profileMessage =
+          'Perfil actualizado correctamente.';
 
         this.cdr.detectChanges();
       },
@@ -440,6 +436,7 @@ export class PipelineComponent implements OnInit {
         this.profileLoading = false;
 
         this.profileError =
+          err?.error?.error ||
           err?.error?.message ||
           'No se pudo actualizar el perfil.';
 

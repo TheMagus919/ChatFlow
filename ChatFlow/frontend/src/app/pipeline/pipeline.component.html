@@ -538,15 +538,20 @@
 
             <div class="form-group">
               <label for="profileEmail">
-                Email
+                Correo electrónico
               </label>
 
               <input
                 id="profileEmail"
                 type="email"
-                [(ngModel)]="profileForm.email"
-                placeholder="tu@email.com"
+                [value]="currentUser.email"
+                readonly
+                disabled
               />
+
+              <small class="profile-input-hint">
+                El correo electrónico no se puede modificar.
+              </small>
             </div>
 
           </div>

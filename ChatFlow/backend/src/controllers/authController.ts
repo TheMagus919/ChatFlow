@@ -185,11 +185,7 @@ export class AuthController {
     }
 
     try {
-
-      const {
-        name,
-        email
-      } = req.body;
+      const { name } = req.body;
 
       if (
         typeof name !== 'string' ||
@@ -201,25 +197,10 @@ export class AuthController {
         });
       }
 
-      if (
-        typeof email !== 'string' ||
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-          email.trim()
-        )
-      ) {
-        return res.status(400).json({
-          error: 'Email válido requerido'
-        });
-      }
-
-      const user =
-        await this.authService.updateProfile(
-          userId,
-          {
-            name,
-            email
-          }
-        );
+      const user = await this.authService.updateProfile(
+        userId,
+        { name }
+      );
 
       return res.status(200).json({
         message: 'Perfil actualizado correctamente',
@@ -235,18 +216,7 @@ export class AuthController {
 
     } catch (error: any) {
 
-      if (
-        error.code === 'ER_DUP_ENTRY' ||
-        error.message === 'El email ya está registrado'
-      ) {
-        return res.status(409).json({
-          error: 'El email ya está registrado'
-        });
-      }
-
-      if (
-        error.message === 'Usuario no encontrado'
-      ) {
+      if (error.message === 'Usuario no encontrado') {
         return res.status(404).json({
           error: error.message
         });
@@ -366,11 +336,11 @@ export class AuthController {
 
 export const registerValidation = [
 
-  body('email')
+  /*body('email')
     .isEmail()
     .normalizeEmail()
     .withMessage('Email válido requerido'),
-
+*/
   body('password')
     .isString()
     .isLength({
@@ -395,14 +365,14 @@ export const registerValidation = [
 ];
 
 export const loginValidation = [
-
+/*
   body('email')
     .isEmail()
     .normalizeEmail()
     .withMessage(
       'Email válido requerido'
     ),
-
+*/
   body('password')
     .isString()
     .notEmpty()

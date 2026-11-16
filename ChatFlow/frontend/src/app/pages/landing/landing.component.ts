@@ -12,21 +12,131 @@ export class LandingComponent {
   readonly currentYear = new Date().getFullYear();
 
   readonly features = [
-    { icon: 'forum', title: 'Todas tus conversaciones en un solo lugar', description: 'Centralizá los contactos de tu negocio y mantené cada conversación organizada.' },
-    { icon: 'view_kanban', title: 'Visualizá tu proceso de ventas', description: 'Seguí cada oportunidad desde el primer contacto hasta el cierre.' },
-    { icon: 'sell', title: 'Organizá con etiquetas', description: 'Clasificá tus clientes para encontrar rápidamente la información que necesitás.' },
-    { icon: 'insights', title: 'Medí tus resultados', description: 'Consultá estadísticas para entender cómo avanza tu negocio.' }
+    {
+      icon: '💬',
+      title: 'Conversaciones organizadas',
+      description:
+        'Centralizá los contactos de tu negocio y mantené cada interacción en un solo lugar.'
+    },
+    {
+      icon: '📋',
+      title: 'Pipeline de ventas',
+      description:
+        'Visualizá el estado de tus oportunidades y seguí el recorrido de cada cliente.'
+    },
+    {
+      icon: '🏷️',
+      title: 'Etiquetas personalizadas',
+      description:
+        'Clasificá tus contactos para encontrar rápidamente la información que necesitás.'
+    },
+    {
+      icon: '📊',
+      title: 'Estadísticas',
+      description:
+        'Consultá el rendimiento de tu negocio y entendé cómo evolucionan tus ventas.'
+    }
   ];
 
   readonly steps = [
-    { number: '01', title: 'Registrá tu negocio', description: 'Creá tu cuenta y comenzá a organizar tu espacio de trabajo.' },
-    { number: '02', title: 'Centralizá tus contactos', description: 'Reuní la información de tus clientes y sus conversaciones.' },
-    { number: '03', title: 'Gestioná y convertí', description: 'Organizá oportunidades, hacé seguimiento y medí tus resultados.' }
+    {
+      number: '01',
+      title: 'Creá tu cuenta',
+      description:
+        'Registrá tu negocio y prepará tu espacio de trabajo.'
+    },
+    {
+      number: '02',
+      title: 'Organizá tus contactos',
+      description:
+        'Centralizá tus clientes y clasificá cada oportunidad.'
+    },
+    {
+      number: '03',
+      title: 'Convertí oportunidades en ventas',
+      description:
+        'Hacé seguimiento de tus conversaciones y controlá tus resultados.'
+    }
   ];
 
   readonly plans = [
-    { name: 'Free', limit: '10', description: 'Para comenzar a organizar tus contactos.', featured: false },
-    { name: 'Pro', limit: '100', description: 'Para negocios que quieren crecer y ordenar más conversaciones.', featured: true },
-    { name: 'Business', limit: '1.000', description: 'Para equipos y negocios con un mayor volumen de contactos.', featured: false }
+    {
+      name: 'Free',
+      limit: '10',
+      description: 'Ideal para comenzar a organizar tus contactos.',
+      featured: false
+    },
+    {
+      name: 'Pro',
+      limit: '100',
+      description: 'Para negocios que necesitan gestionar más conversaciones.',
+      featured: true
+    },
+    {
+      name: 'Business',
+      limit: '1.000',
+      description: 'Para negocios con un mayor volumen de contactos.',
+      featured: false
+    }
+  ];
+
+  readonly mockColumns = [
+    {
+      title: 'Nuevos',
+      count: 2,
+      color: 'new',
+      customers: [
+        {
+          name: 'Lucas López',
+          phone: '266 123 4567',
+          tag: 'Closed',
+          tagColor: 'closed'
+        },
+        {
+          name: 'Valentina Gómez',
+          phone: '266 234 5678',
+          tag: 'Follow Up',
+          tagColor: 'follow'
+        }
+      ]
+    },
+    {
+      title: 'En Conversación',
+      count: 4,
+      color: 'progress',
+      customers: [
+        {
+          name: 'Nicolás Díaz',
+          phone: '266 345 6789',
+          tag: 'Hot Lead',
+          tagColor: 'hot'
+        },
+        {
+          name: 'Carla López',
+          phone: '266 456 7890',
+          tag: 'Closed',
+          tagColor: 'closed'
+        },
+        {
+          name: 'Juan Pérez',
+          phone: '266 567 8901',
+          tag: 'VIP',
+          tagColor: 'vip'
+        }
+      ]
+    },
+    {
+      title: 'Vendidos',
+      count: 1,
+      color: 'sold',
+      customers: [
+        {
+          name: 'Lucía Díaz',
+          phone: '266 678 9012',
+          tag: 'Hot Lead',
+          tagColor: 'hot'
+        }
+      ]
+    }
   ];
 }

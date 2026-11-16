@@ -1,146 +1,452 @@
 <div class="landing-page">
+
+  <!-- ENCABEZADO -->
   <header class="landing-header">
-    <a class="brand" routerLink="/" aria-label="ChatFlow, inicio">
-      <span class="brand-mark"><span class="material-icons">forum</span></span>
-      <span>Chat<span>Flow</span></span>
+    <a class="brand" routerLink="/" aria-label="ChatFlow">
+      <span class="brand-logo">
+        <img src="chatflowicono.png" alt="ChatFlow">
+      </span>
+      <span class="brand-name">ChatFlow</span>
     </a>
 
-    <nav class="desktop-nav" aria-label="Navegación principal">
+    <nav class="desktop-nav">
       <a href="#funcionalidades">Funcionalidades</a>
       <a href="#como-funciona">Cómo funciona</a>
       <a href="#planes">Planes</a>
     </nav>
 
     <div class="header-actions">
-      <a class="login-link" routerLink="/login">Iniciar sesión</a>
-      <a class="button button-primary header-cta" routerLink="/register">Crear cuenta <span class="material-icons">arrow_forward</span></a>
+      <a routerLink="/login" class="login-link">
+        Iniciar sesión
+      </a>
+
+      <a routerLink="/register" class="header-button">
+        Crear cuenta
+        <span>→</span>
+      </a>
     </div>
   </header>
 
+
   <main>
-    <section class="hero">
+
+    <!-- HERO -->
+    <section class="hero-section">
+
       <div class="hero-copy">
-        <div class="eyebrow"><span></span> ORGANIZÁ. CONVERSÁ. CRECÉ.</div>
-        <h1>Tus clientes y conversaciones, <span>siempre en orden.</span></h1>
-        <p class="hero-description">
-          ChatFlow te ayuda a centralizar tus contactos, organizar oportunidades de venta
-          y seguir cada conversación desde un solo lugar.
+        <span class="eyebrow">
+          ORGANIZÁ · CONVERSÁ · CRECÉ
+        </span>
+
+        <h1>
+          Transformá contactos
+          <span>en ventas.</span>
+        </h1>
+
+        <p>
+          Mantené un control eficaz sobre tus clientes, organizá cada
+          interacción y seguí el progreso de tus oportunidades para
+          cerrar más negocios con menos esfuerzo.
         </p>
+
         <div class="hero-actions">
-          <a class="button button-primary" routerLink="/register">Empezar gratis <span class="material-icons">arrow_forward</span></a>
-          <a class="button button-secondary" href="#como-funciona">Conocer cómo funciona</a>
+          <a routerLink="/register" class="primary-button">
+            Empezar gratis
+            <span>→</span>
+          </a>
+
+          <a href="#como-funciona" class="secondary-button">
+            Conocer más
+          </a>
         </div>
-        <div class="hero-note"><span class="material-icons">check_circle</span> Empezá con el plan gratuito. Sin complicaciones.</div>
+
+        <div class="hero-note">
+          <span>✓</span>
+          Comenzá con el plan gratuito de ChatFlow.
+        </div>
       </div>
 
-      <div class="hero-visual" aria-label="Vista ilustrativa del panel de ChatFlow">
-        <div class="visual-glow"></div>
-        <div class="dashboard-window">
-          <div class="window-top">
-            <div class="window-dots"><i></i><i></i><i></i></div>
-            <span>Tu espacio de trabajo</span>
-            <span class="material-icons">more_horiz</span>
+
+      <!-- VISTA ILUSTRATIVA DEL PIPELINE -->
+      <div class="hero-dashboard">
+
+        <div class="dashboard-sidebar">
+
+          <div class="dashboard-brand">
+            <img src="chatflowicono.png" alt="ChatFlow">
+            <strong>ChatFlow</strong>
           </div>
-          <div class="dashboard-body">
-            <aside class="mock-sidebar">
-              <div class="mock-logo"><span class="material-icons">forum</span></div>
-              <span class="material-icons active">dashboard</span>
-              <span class="material-icons">people</span>
-              <span class="material-icons">chat</span>
-              <span class="material-icons">sell</span>
-              <span class="material-icons">bar_chart</span>
-            </aside>
-            <div class="mock-content">
-              <div class="mock-heading"><div><small>RESUMEN GENERAL</small><h3>¡Hola! 👋</h3></div><span class="mock-date">Esta semana</span></div>
-              <div class="mock-stats">
-                <div><small>Clientes</small><strong>248</strong><span class="positive">+12% este mes</span></div>
-                <div><small>Conversaciones</small><strong>36</strong><span class="positive">En seguimiento</span></div>
+
+          <nav class="dashboard-menu">
+
+            <div class="dashboard-menu-item active">
+              <img src="menuSeleccionado.png" alt="">
+              <span>Menu Principal</span>
+            </div>
+
+            <div class="dashboard-menu-item">
+              <img src="clientes.png" alt="">
+              <span>Clientes</span>
+            </div>
+
+            <div class="dashboard-menu-item">
+              <img src="estadisticas.png" alt="">
+              <span>Estadísticas</span>
+            </div>
+
+            <div class="dashboard-menu-item">
+              <img src="chat.png" alt="">
+              <span>Chats</span>
+            </div>
+
+            <div class="dashboard-menu-item">
+              <img src="planes.png" alt="">
+              <span>Planes</span>
+            </div>
+
+            <div class="dashboard-menu-item">
+              <img src="salir.png" alt="">
+              <span>Cerrar sesión</span>
+            </div>
+
+          </nav>
+        </div>
+
+
+        <div class="dashboard-content">
+
+          <!-- BARRA SUPERIOR -->
+          <div class="dashboard-navbar">
+            <div class="navbar-spacer"></div>
+
+            <div class="navbar-user">
+              <div class="notification">
+                <span>🔔</span>
+                <small>2</small>
               </div>
-              <div class="mock-pipeline-title"><strong>Pipeline de ventas</strong><small>Oportunidades</small></div>
-              <div class="mock-columns">
-                <div class="mock-column"><b><i class="dot blue"></i> Nuevos</b><article><span class="avatar a1">ML</span><span><strong>María López</strong><small>Consulta inicial</small></span></article><article><span class="avatar a2">JP</span><span><strong>Juan Pérez</strong><small>Nuevo contacto</small></span></article></div>
-                <div class="mock-column"><b><i class="dot green"></i> En conversación</b><article><span class="avatar a3">CG</span><span><strong>Carla Gómez</strong><small>Presupuesto</small></span></article></div>
-                <div class="mock-column"><b><i class="dot purple"></i> Cerrados</b><article><span class="avatar a4">RT</span><span><strong>Roberto Díaz</strong><small>Venta concretada</small></span></article></div>
-              </div>
+
+              <div class="user-avatar">L</div>
+
+              <span>ventas@limpiamax.com</span>
             </div>
           </div>
+
+
+          <!-- ENCABEZADO DEL PIPELINE -->
+          <div class="pipeline-heading">
+
+            <div class="pipeline-intro">
+              <h2>Transformá contactos en ventas</h2>
+
+              <p>
+                Mantené un control eficaz sobre tus clientes,
+                organizá cada interacción y seguí el progreso
+                de tus oportunidades para cerrar más negocios
+                con menos esfuerzo.
+              </p>
+            </div>
+
+            <div class="pipeline-stats">
+              <div class="pipeline-stat stat-new">
+                <strong>2</strong>
+                <span>Nuevos</span>
+              </div>
+
+              <div class="pipeline-stat stat-progress">
+                <strong>4</strong>
+                <span>Conversación</span>
+              </div>
+
+              <div class="pipeline-stat stat-sold">
+                <strong>1</strong>
+                <span>Vendidos</span>
+              </div>
+            </div>
+
+          </div>
+
+
+          <!-- COLUMNAS -->
+          <div class="pipeline-columns">
+
+            @for (column of mockColumns; track column.title) {
+
+              <section
+                class="pipeline-column"
+                [class.column-new]="column.color === 'new'"
+                [class.column-progress]="column.color === 'progress'"
+                [class.column-sold]="column.color === 'sold'"
+              >
+
+                <div class="column-header">
+                  <h3>{{ column.title }}</h3>
+                  <span>{{ column.count }}</span>
+                </div>
+
+                <div class="column-body">
+
+                  @for (customer of column.customers; track customer.name) {
+
+                    <article class="customer-card">
+
+                      <div class="customer-card-top">
+                        <h4>{{ customer.name }}</h4>
+                        <span class="online-dot"></span>
+                      </div>
+
+                      <p>{{ customer.phone }}</p>
+
+                      <span
+                        class="customer-tag"
+                        [class.tag-closed]="customer.tagColor === 'closed'"
+                        [class.tag-follow]="customer.tagColor === 'follow'"
+                        [class.tag-hot]="customer.tagColor === 'hot'"
+                        [class.tag-vip]="customer.tagColor === 'vip'"
+                      >
+                        {{ customer.tag }}
+                      </span>
+
+                    </article>
+
+                  }
+
+                </div>
+
+              </section>
+
+            }
+
+          </div>
+
         </div>
-        <div class="floating-card"><span class="material-icons">task_alt</span><div><strong>¡Oportunidad organizada!</strong><small>Tu equipo tiene todo bajo control.</small></div></div>
+      </div>
+
+    </section>
+
+
+    <!-- BENEFICIOS -->
+    <section class="benefits-strip">
+      <span>TODO LO QUE NECESITÁS PARA GESTIONAR TU NEGOCIO</span>
+
+      <div>
+        <span>💬</span>
+        Conversaciones organizadas
+      </div>
+
+      <div>
+        <span>📋</span>
+        Seguimiento comercial
+      </div>
+
+      <div>
+        <span>📈</span>
+        Control de resultados
       </div>
     </section>
 
-    <section class="trust-strip">
-      <span>UNA FORMA MÁS SIMPLE DE GESTIONAR TU NEGOCIO</span>
-      <div><span class="material-icons">forum</span> Conversaciones organizadas</div>
-      <div><span class="material-icons">trending_up</span> Seguimiento comercial</div>
-      <div><span class="material-icons">insights</span> Decisiones con información</div>
-    </section>
 
-    <section class="section features-section" id="funcionalidades">
+    <!-- FUNCIONALIDADES -->
+    <section class="content-section" id="funcionalidades">
+
       <div class="section-heading">
-        <span class="eyebrow">TODO CONECTADO</span>
-        <h2>Más claridad en cada etapa de tu negocio.</h2>
-        <p>Las herramientas que necesitás para no perder de vista a tus clientes ni tus oportunidades.</p>
+        <span class="eyebrow">FUNCIONALIDADES</span>
+
+        <h2>
+          Todo tu negocio,
+          <span>en un solo lugar.</span>
+        </h2>
+
+        <p>
+          Organizá tus clientes, administrá conversaciones y
+          mantené el control de tus oportunidades comerciales.
+        </p>
       </div>
-      <div class="feature-grid">
+
+
+      <div class="features-grid">
+
         @for (feature of features; track feature.title) {
+
           <article class="feature-card">
-            <div class="feature-icon"><span class="material-icons">{{ feature.icon }}</span></div>
+
+            <div class="feature-icon">
+              {{ feature.icon }}
+            </div>
+
             <h3>{{ feature.title }}</h3>
+
             <p>{{ feature.description }}</p>
+
           </article>
+
         }
+
       </div>
+
     </section>
 
+
+    <!-- COMO FUNCIONA -->
     <section class="how-section" id="como-funciona">
-      <div class="section how-inner">
-        <div class="how-intro">
-          <span class="eyebrow">SIMPLE DESDE EL PRIMER DÍA</span>
-          <h2>Empezá a trabajar mejor en tres pasos.</h2>
-          <p>ChatFlow reúne la información que necesitás para que puedas enfocarte en lo importante: tus clientes.</p>
-          <a class="text-link" routerLink="/register">Crear mi cuenta <span class="material-icons">arrow_forward</span></a>
+
+      <div class="how-container">
+
+        <div class="how-copy">
+          <span class="eyebrow">CÓMO FUNCIONA</span>
+
+          <h2>
+            Empezá a trabajar mejor
+            en tres simples pasos.
+          </h2>
+
+          <p>
+            ChatFlow te permite tener una visión clara de tus
+            clientes y oportunidades para que puedas enfocarte
+            en hacer crecer tu negocio.
+          </p>
+
+          <a routerLink="/register" class="text-link">
+            Crear mi cuenta →
+          </a>
         </div>
+
+
         <div class="steps-list">
+
           @for (step of steps; track step.number) {
+
             <article class="step-card">
-              <span class="step-number">{{ step.number }}</span>
-              <div><h3>{{ step.title }}</h3><p>{{ step.description }}</p></div>
+
+              <span class="step-number">
+                {{ step.number }}
+              </span>
+
+              <div>
+                <h3>{{ step.title }}</h3>
+                <p>{{ step.description }}</p>
+              </div>
+
             </article>
+
           }
+
         </div>
+
       </div>
+
     </section>
 
-    <section class="section plans-section" id="planes">
+
+    <!-- PLANES -->
+    <section class="content-section plans-section" id="planes">
+
       <div class="section-heading">
-        <span class="eyebrow">UN PLAN PARA CADA ETAPA</span>
-        <h2>Crecé a tu ritmo con ChatFlow.</h2>
-        <p>Empezá gratis y elegí más capacidad cuando tu negocio lo necesite.</p>
+        <span class="eyebrow">PLANES</span>
+
+        <h2>
+          Elegí el plan que
+          <span>acompañe tu crecimiento.</span>
+        </h2>
+
+        <p>
+          Comenzá gratis y aumentá tu capacidad cuando tu negocio
+          necesite gestionar más conversaciones.
+        </p>
       </div>
+
+
       <div class="plans-grid">
+
         @for (plan of plans; track plan.name) {
-          <article class="plan-card" [class.featured]="plan.featured">
-            @if (plan.featured) { <span class="plan-badge">MÁS ELEGIDO</span> }
+
+          <article
+            class="plan-card"
+            [class.plan-featured]="plan.featured"
+          >
+
+            @if (plan.featured) {
+              <span class="plan-badge">MÁS ELEGIDO</span>
+            }
+
             <h3>{{ plan.name }}</h3>
+
             <p>{{ plan.description }}</p>
-            <div class="plan-limit"><strong>{{ plan.limit }}</strong><span>conversaciones<br>recibidas</span></div>
-            <a class="button" [class.button-primary]="plan.featured" [class.button-secondary]="!plan.featured" routerLink="/register">Elegir {{ plan.name }}</a>
+
+            <div class="plan-limit">
+              <strong>{{ plan.limit }}</strong>
+
+              <span>
+                conversaciones
+                <br>
+                recibidas en total
+              </span>
+            </div>
+
+            <a
+              routerLink="/register"
+              class="plan-button"
+              [class.plan-button-primary]="plan.featured"
+            >
+              Elegir {{ plan.name }}
+            </a>
+
           </article>
+
         }
+
       </div>
-      <p class="plans-note">Los límites corresponden al total de conversaciones que puede recibir cada cuenta.</p>
+
+      <p class="plans-note">
+        El límite representa el total acumulado de conversaciones
+        que puede recibir cada cuenta según su plan.
+      </p>
+
     </section>
 
+
+    <!-- LLAMADO FINAL -->
     <section class="final-cta">
-      <div><span class="eyebrow">TU NEGOCIO, MÁS ORGANIZADO</span><h2>¿Listo para llevar tus conversaciones al siguiente nivel?</h2><p>Creá tu cuenta y empezá a gestionar tus clientes con ChatFlow.</p></div>
-      <a class="button button-light" routerLink="/register">Empezar gratis <span class="material-icons">arrow_forward</span></a>
+
+      <div>
+        <span class="eyebrow">TU NEGOCIO, MÁS ORGANIZADO</span>
+
+        <h2>
+          Es momento de transformar tus contactos en oportunidades.
+        </h2>
+
+        <p>
+          Empezá a gestionar tus clientes con ChatFlow.
+        </p>
+      </div>
+
+      <a routerLink="/register" class="cta-button">
+        Empezar gratis →
+      </a>
+
     </section>
+
   </main>
 
+
+  <!-- FOOTER -->
   <footer class="landing-footer">
-    <a class="brand" routerLink="/"><span class="brand-mark"><span class="material-icons">forum</span></span><span>Chat<span>Flow</span></span></a>
-    <span>Organizá tus conversaciones. Hacé crecer tu negocio.</span>
-    <small>© {{ currentYear }} ChatFlow. Todos los derechos reservados.</small>
+
+    <a class="brand" routerLink="/">
+      <span class="brand-logo">
+        <img src="chatflowicono.png" alt="ChatFlow">
+      </span>
+
+      <span class="brand-name">ChatFlow</span>
+    </a>
+
+    <p>
+      Organizá tus conversaciones. Hacé crecer tu negocio.
+    </p>
+
+    <small>
+      © {{ currentYear }} ChatFlow. Todos los derechos reservados.
+    </small>
+
   </footer>
+
 </div>

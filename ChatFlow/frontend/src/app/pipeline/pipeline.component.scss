@@ -1667,6 +1667,19 @@
   }
 }
 
+.profile-form input:disabled {
+  background: #f1f3f8;
+  color: #8994a5;
+  border-color: #e5e8ef;
+  cursor: not-allowed;
+}
+
+.profile-input-hint {
+  color: #94a3b8;
+  font-size: 11px;
+  margin-top: -2px;
+}
+
 /* RESPONSIVE */
 
 @media (max-width: 1200px) {

@@ -35,7 +35,6 @@ export interface LoginResponse {
 
 export interface UpdateProfileData {
   name: string;
-  email: string;
 }
 
 export class AuthService {
@@ -193,42 +192,18 @@ export class AuthService {
     data: UpdateProfileData
   ): Promise<User> {
 
-    const normalizedEmail =
-      data.email.trim().toLowerCase();
-
-    const normalizedName =
-      data.name.trim();
-
-    const [existingUsers] = await pool.execute(
-      `
-      SELECT id
-      FROM users
-      WHERE email = ?
-        AND id <> ?
-      LIMIT 1
-      `,
-      [
-        normalizedEmail,
-        userId
-      ]
-    ) as any;
-
-    if (existingUsers.length > 0) {
-      throw new Error('El email ya está registrado');
-    }
+    const normalizedName = data.name.trim();
 
     const [result] = await pool.execute(
       `
       UPDATE users
       SET
         name = ?,
-        email = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
       `,
       [
         normalizedName,
-        normalizedEmail,
         userId
       ]
     ) as any;

@@ -134,20 +134,16 @@ export class AuthService {
     );
   }
 
-  updateProfile(
-    name: string,
-    email: string
-  ): Observable<User> {
-    return this.http.put<User>(
+  updateProfile(name: string): Observable<User> {
+    return this.http.put<{ message: string; user: User }>(
       `${this.apiUrl}/me`,
-      {
-        name,
-        email
-      },
+      { name },
       {
         headers: this.getAuthHeaders()
       }
     ).pipe(
+      map(response => response.user),
+
       tap(user => {
         this.setLocalStorageItem(
           'chatflow_user',
