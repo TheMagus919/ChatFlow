@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CustomerTagService = void 0;
 const database_1 = __importDefault(require("../config/database"));
-const VALID_TAG_ID = /^\d+$/;
 class CustomerTagService {
     async assignTagsToCustomer(customerId, userId, tagIds) {
         const customerIdNumber = Number(customerId);
@@ -16,18 +15,18 @@ class CustomerTagService {
             userIdNumber <= 0) {
             throw new Error('Invalid customer or user ID');
         }
+        if (!Array.isArray(tagIds)) {
+            throw new Error('Invalid tag IDs');
+        }
         const normalizedTagIds = [
-            ...new Set((Array.isArray(tagIds) ? tagIds : [])
-                .map(String)
-                .map(id => id.trim())
-                .filter(id => VALID_TAG_ID.test(id))
-                .map(Number)
-                .filter(id => Number.isInteger(id) && id > 0))
+            ...new Set(tagIds.map(id => String(id).trim()))
         ];
+        if (normalizedTagIds.some(id => !id || id.length > 50)) {
+            throw new Error('One or more tags are invalid');
+        }
         const connection = await database_1.default.getConnection();
         try {
             await connection.beginTransaction();
-            // Verificar que el cliente pertenece al usuario
             const [customerRows] = await connection.execute(`
         SELECT id
         FROM customers
@@ -38,8 +37,6 @@ class CustomerTagService {
             if (!customerRows.length) {
                 throw new Error('Customer not found');
             }
-            // Verificar que todos los tags existen
-            // Los tags son globales y pueden ser utilizados por cualquier usuario.
             if (normalizedTagIds.length > 0) {
                 const placeholders = normalizedTagIds
                     .map(() => '?')
@@ -48,19 +45,18 @@ class CustomerTagService {
           SELECT id
           FROM tags
           WHERE id IN (${placeholders})
-          `, normalizedTagIds);
-                const existingTagIds = new Set(tagRows.map((tag) => Number(tag.id)));
+            AND (user_id IS NULL OR user_id = ?)
+          `, [...normalizedTagIds, userIdNumber]);
+                const existingTagIds = new Set(tagRows.map((tag) => String(tag.id)));
                 const invalidTagIds = normalizedTagIds.filter(tagId => !existingTagIds.has(tagId));
                 if (invalidTagIds.length > 0) {
                     throw new Error('One or more tags are invalid');
                 }
             }
-            // Reemplazar todas las asociaciones dentro de la misma transacción
             await connection.execute(`
         DELETE FROM customer_tags
         WHERE customer_id = ?
         `, [customerIdNumber]);
-            // Agregar los nuevos tags
             if (normalizedTagIds.length > 0) {
                 const values = normalizedTagIds
                     .map(() => '(?, ?)')
@@ -75,7 +71,6 @@ class CustomerTagService {
           VALUES ${values}
           `, params);
             }
-            // Obtener el cliente actualizado
             const [updatedCustomers] = await connection.execute(`
         SELECT
           c.*,
@@ -118,29 +113,24 @@ class CustomerTagService {
             userIdNumber <= 0) {
             throw new Error('Invalid customer or user ID');
         }
-        return new Promise(async (resolve, reject) => {
-            try {
-                const [rows] = await database_1.default.execute(`
-          SELECT
-            t.id,
-            t.name,
-            t.color,
-            t.description
-          FROM tags t
-          INNER JOIN customer_tags ct
-            ON t.id = ct.tag_id
-          INNER JOIN customers c
-            ON ct.customer_id = c.id
-          WHERE c.id = ?
-            AND c.user_id = ?
-          ORDER BY t.name ASC
-          `, [customerIdNumber, userIdNumber]);
-                resolve(Array.isArray(rows) ? rows : []);
-            }
-            catch (error) {
-                reject(error);
-            }
-        });
+        const [rows] = await database_1.default.execute(`
+      SELECT
+        t.id,
+        t.name,
+        t.color,
+        t.description,
+        t.user_id
+      FROM tags t
+      INNER JOIN customer_tags ct
+        ON t.id = ct.tag_id
+      INNER JOIN customers c
+        ON ct.customer_id = c.id
+      WHERE c.id = ?
+        AND c.user_id = ?
+        AND (t.user_id IS NULL OR t.user_id = ?)
+      ORDER BY t.name ASC
+      `, [customerIdNumber, userIdNumber, userIdNumber]);
+        return Array.isArray(rows) ? rows : [];
     }
 }
 exports.CustomerTagService = CustomerTagService;

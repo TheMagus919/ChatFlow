@@ -21,8 +21,9 @@ import {
 
 import { environment } from '../../environments/environment';
 import { AuthService } from '../services/auth.service';
-import { Router, RouterLink } from '@angular/router';
-
+import { Router, RouterLink, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { TagsComponent } from '../components/tags/tags.component';
 import { PipelineCustomer } from '../interfaces/pipeline.interface';
 import { ConversationsComponent } from '../components/conversation/conversation.component';
 import { NotificationService } from '../services/notification.service';
@@ -36,7 +37,8 @@ import { FormsModule } from '@angular/forms';
     CommonModule,
     DragDropModule,
     RouterLink,
-    FormsModule
+    FormsModule,
+    TagsComponent
   ],
   templateUrl: './pipeline.component.html',
   styleUrls: ['./pipeline.component.scss']
@@ -56,6 +58,7 @@ export class PipelineComponent implements OnInit {
 
   showProfileModal = false;
   editProfileMode = false;
+  isTagsPage = false;
 
   profileForm = {
     name: '',
@@ -123,9 +126,25 @@ export class PipelineComponent implements OnInit {
       }
 
       this.currentUser = user;
-
+      if (
+        this.isTagsPage &&
+        user.subscription !== 'pro' &&
+        user.subscription !== 'business'
+      ) {
+        this.router.navigate(['/pipeline']);
+        return;
+      }
       this.chatService.joinUserRoom(user.id);
     });
+    this.router.events
+    .pipe(
+      filter(event => event instanceof NavigationEnd)
+    )
+    .subscribe(() => {
+      this.isTagsPage = this.router.url.startsWith('/tags');
+      this.cdr.detectChanges();
+    });
+    this.isTagsPage = this.router.url.startsWith('/tags');
     this.loadPipeline();
     this.loadNotifications();
     this.listenNotifications();
@@ -187,10 +206,11 @@ export class PipelineComponent implements OnInit {
           this.closedCustomers.push(customer);
         }
       });
-      this.customersUsed =
+      /*this.customersUsed =
         this.newCustomers.length +
         this.inProgressCustomers.length +
-        this.closedCustomers.length;
+        this.closedCustomers.length;*/
+      this.customersUsed = customers.length;
       this.updateStats();
       this.cdr.detectChanges();
     },

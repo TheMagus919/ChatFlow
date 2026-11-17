@@ -191,9 +191,7 @@ export class AuthService {
     userId: number,
     data: UpdateProfileData
   ): Promise<User> {
-
     const normalizedName = data.name.trim();
-
     const [result] = await pool.execute(
       `
       UPDATE users

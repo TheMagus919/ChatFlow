@@ -1,3 +1,4 @@
+
 export interface Tag {
   id: string;
   name: string;
@@ -5,4 +6,7 @@ export interface Tag {
   description?: string;
   createdAt: Date;
   updatedAt: Date;
+  user_id?: number | null;
+  isDefault?: boolean;
+  customerCount?: number;
 }

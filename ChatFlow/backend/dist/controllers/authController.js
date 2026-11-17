@@ -109,7 +109,7 @@ class AuthController {
             });
         }
         try {
-            const { name, email } = req.body;
+            const { name } = req.body;
             if (typeof name !== 'string' ||
                 name.trim().length < 2 ||
                 name.trim().length > 100) {
@@ -117,16 +117,7 @@ class AuthController {
                     error: 'El nombre debe tener entre 2 y 100 caracteres'
                 });
             }
-            if (typeof email !== 'string' ||
-                !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-                return res.status(400).json({
-                    error: 'Email válido requerido'
-                });
-            }
-            const user = await this.authService.updateProfile(userId, {
-                name,
-                email
-            });
+            const user = await this.authService.updateProfile(userId, { name });
             return res.status(200).json({
                 message: 'Perfil actualizado correctamente',
                 user: {
@@ -140,12 +131,6 @@ class AuthController {
             });
         }
         catch (error) {
-            if (error.code === 'ER_DUP_ENTRY' ||
-                error.message === 'El email ya está registrado') {
-                return res.status(409).json({
-                    error: 'El email ya está registrado'
-                });
-            }
             if (error.message === 'Usuario no encontrado') {
                 return res.status(404).json({
                     error: error.message

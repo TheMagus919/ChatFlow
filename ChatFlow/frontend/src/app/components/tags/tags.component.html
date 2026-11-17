@@ -1,0 +1,347 @@
+
+<div class="tags-page">
+
+  <!-- ENCABEZADO -->
+  <div class="tags-header">
+    <div>
+      <span class="page-eyebrow">ORGANIZACIÓN</span>
+      <h1>Etiquetas</h1>
+      <p>
+        Administrá las etiquetas que utilizás para clasificar y organizar
+        tus clientes.
+      </p>
+    </div>
+
+    <button
+      *ngIf="canManageTags"
+      class="btn-create"
+      (click)="openCreateModal()">
+
+      <i class="bi bi-plus-lg"></i>
+      Nueva etiqueta
+
+    </button>
+  </div>
+
+  <!-- AVISO PLAN FREE -->
+  <div class="upgrade-notice" *ngIf="!canManageTags">
+    <div class="upgrade-icon">
+      <i class="bi bi-stars"></i>
+    </div>
+
+    <div class="upgrade-text">
+      <h3>Desbloqueá las etiquetas personalizadas</h3>
+      <p>
+        Actualizá tu cuenta al plan Pro o Business para crear tus propias
+        etiquetas privadas, editarlas y administrarlas.
+      </p>
+    </div>
+
+    <a routerLink="/pricing" class="upgrade-link">
+      Ver planes
+      <i class="bi bi-arrow-right"></i>
+    </a>
+  </div>
+
+  <!-- MENSAJES -->
+  <div class="alert-message success" *ngIf="successMessage">
+    <i class="bi bi-check-circle"></i>
+    {{ successMessage }}
+  </div>
+
+  <div class="alert-message error" *ngIf="errorMessage">
+    <i class="bi bi-exclamation-circle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- RESUMEN -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon purple">
+        <i class="bi bi-tags"></i>
+      </div>
+      <div>
+        <span class="summary-value">{{ tags.length }}</span>
+        <span class="summary-label">Etiquetas disponibles</span>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon blue">
+        <i class="bi bi-globe"></i>
+      </div>
+      <div>
+        <span class="summary-value">{{ defaultTags.length }}</span>
+        <span class="summary-label">Predeterminadas</span>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon green">
+        <i class="bi bi-person-check"></i>
+      </div>
+      <div>
+        <span class="summary-value">{{ customTags.length }}</span>
+        <span class="summary-label">Personalizadas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARGANDO -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner-border"></div>
+    <span>Cargando etiquetas...</span>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- PREDETERMINADAS -->
+    <section class="tag-section">
+      <div class="section-header">
+        <div>
+          <h2>Etiquetas predeterminadas</h2>
+          <p>Disponibles para todas las cuentas de ChatFlow.</p>
+        </div>
+
+        <span class="section-counter">{{ defaultTags.length }}</span>
+      </div>
+
+      <div class="tags-grid" *ngIf="defaultTags.length > 0">
+        <article class="tag-card" *ngFor="let tag of defaultTags">
+
+          <div class="tag-card-top">
+            <div class="tag-name">
+              <span
+                class="tag-color"
+                [style.backgroundColor]="tag.color">
+              </span>
+              <h3>{{ tag.name }}</h3>
+            </div>
+
+            <span class="tag-badge default-badge">
+              Predeterminada
+            </span>
+          </div>
+
+          <p class="tag-description">
+            {{ tag.description || 'Sin descripción' }}
+          </p>
+
+          <div class="tag-card-bottom">
+            <span>
+              <i class="bi bi-people"></i>
+              {{ tag.customerCount || 0 }} clientes
+            </span>
+
+            <span class="shared-label">
+              <i class="bi bi-lock"></i>
+              Compartida
+            </span>
+          </div>
+
+        </article>
+      </div>
+
+      <div class="empty-state" *ngIf="defaultTags.length === 0">
+        No hay etiquetas predeterminadas disponibles.
+      </div>
+    </section>
+
+    <!-- PERSONALIZADAS -->
+    <section class="tag-section">
+      <div class="section-header">
+        <div>
+          <h2>Mis etiquetas personalizadas</h2>
+          <p>Etiquetas privadas de tu cuenta.</p>
+        </div>
+
+        <span class="section-counter">{{ customTags.length }}</span>
+      </div>
+
+      <div class="tags-grid" *ngIf="customTags.length > 0">
+        <article class="tag-card" *ngFor="let tag of customTags">
+
+          <div class="tag-card-top">
+            <div class="tag-name">
+              <span
+                class="tag-color"
+                [style.backgroundColor]="tag.color">
+              </span>
+              <h3>{{ tag.name }}</h3>
+            </div>
+
+            <span class="tag-badge custom-badge">
+              Personalizada
+            </span>
+          </div>
+
+          <p class="tag-description">
+            {{ tag.description || 'Sin descripción' }}
+          </p>
+
+          <div class="tag-card-bottom">
+            <span>
+              <i class="bi bi-people"></i>
+              {{ tag.customerCount || 0 }} clientes
+            </span>
+
+            <div class="tag-actions" *ngIf="canManageTags">
+              <button
+                type="button"
+                class="action-button edit"
+                title="Editar etiqueta"
+                (click)="editTag(tag)">
+
+                <i class="bi bi-pencil"></i>
+
+              </button>
+
+              <button
+                type="button"
+                class="action-button delete"
+                title="Eliminar etiqueta"
+                (click)="deleteTag(tag)">
+
+                <i class="bi bi-trash"></i>
+
+              </button>
+
+            </div>
+          </div>
+
+        </article>
+      </div>
+
+      <div class="empty-state custom-empty" *ngIf="customTags.length === 0">
+        <div class="empty-icon">
+          <i class="bi bi-tags"></i>
+        </div>
+
+        <h3>No tenés etiquetas personalizadas</h3>
+
+        <p *ngIf="canManageTags">
+          Creá tu primera etiqueta para organizar mejor tus clientes.
+        </p>
+
+        <p *ngIf="!canManageTags">
+          Esta función está disponible en los planes Pro y Business.
+        </p>
+
+        <button
+          *ngIf="canManageTags"
+          class="btn-create empty-create"
+          (click)="openCreateModal()">
+          <i class="bi bi-plus-lg"></i>
+          Crear etiqueta
+        </button>
+      </div>
+    </section>
+
+  </ng-container>
+
+</div>
+
+<!-- MODAL CREAR / EDITAR -->
+<div
+  class="modal-overlay"
+  *ngIf="showModal"
+  (click)="closeModal()">
+
+  <div
+    class="tag-modal"
+    (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <h2>{{ editingTag ? 'Editar etiqueta' : 'Nueva etiqueta' }}</h2>
+        <p>
+          {{ editingTag
+            ? 'Modificá los datos de tu etiqueta.'
+            : 'Creá una etiqueta privada para tu cuenta.' }}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="modal-close"
+        title="Cerrar"
+        (click)="closeModal()">
+
+        <i class="bi bi-x-lg"></i>
+
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="alert-message error" *ngIf="modalError">
+        <i class="bi bi-exclamation-circle"></i>
+        {{ modalError }}
+      </div>
+
+      <div class="form-group">
+        <label for="tagName">Nombre de la etiqueta</label>
+        <input
+          id="tagName"
+          type="text"
+          class="form-control"
+          [(ngModel)]="currentTag.name"
+          maxlength="50"
+          placeholder="Ej. Cliente frecuente">
+      </div>
+
+      <div class="form-group">
+        <label for="tagColor">Color</label>
+
+        <div class="color-control">
+          <input
+            id="tagColor"
+            type="color"
+            [(ngModel)]="currentTag.color">
+
+          <span>{{ currentTag.color }}</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="tagDescription">Descripción</label>
+        <textarea
+          id="tagDescription"
+          class="form-control"
+          rows="3"
+          maxlength="200"
+          [(ngModel)]="currentTag.description"
+          placeholder="Agregá una descripción (opcional)">
+        </textarea>
+      </div>
+
+      <div class="privacy-note">
+        <i class="bi bi-shield-lock"></i>
+        Esta etiqueta será privada y solamente estará disponible para tu cuenta.
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button
+        class="btn-cancel"
+        (click)="closeModal()">
+        Cancelar
+      </button>
+
+      <button
+        class="btn-save"
+        (click)="saveTag()"
+        [disabled]="saving || !currentTag.name.trim()">
+
+        <span
+          *ngIf="saving"
+          class="spinner-border spinner-border-sm">
+        </span>
+
+        {{ editingTag ? 'Guardar cambios' : 'Crear etiqueta' }}
+      </button>
+    </div>
+
+  </div>
+</div>

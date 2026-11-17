@@ -1,8 +1,8 @@
+
 import pool from '../config/database';
 
-const VALID_TAG_ID = /^\d+$/;
-
 export class CustomerTagService {
+
   async assignTagsToCustomer(
     customerId: string,
     userId: string,
@@ -20,23 +20,27 @@ export class CustomerTagService {
       throw new Error('Invalid customer or user ID');
     }
 
+    if (!Array.isArray(tagIds)) {
+      throw new Error('Invalid tag IDs');
+    }
+
     const normalizedTagIds = [
-      ...new Set(
-        (Array.isArray(tagIds) ? tagIds : [])
-          .map(String)
-          .map(id => id.trim())
-          .filter(id => VALID_TAG_ID.test(id))
-          .map(Number)
-          .filter(id => Number.isInteger(id) && id > 0)
-      )
+      ...new Set(tagIds.map(id => String(id).trim()))
     ];
+
+    if (
+      normalizedTagIds.some(
+        id => !id || id.length > 50
+      )
+    ) {
+      throw new Error('One or more tags are invalid');
+    }
 
     const connection = await pool.getConnection();
 
     try {
       await connection.beginTransaction();
 
-      // Verificar que el cliente pertenece al usuario
       const [customerRows]: any = await connection.execute(
         `
         SELECT id
@@ -52,8 +56,6 @@ export class CustomerTagService {
         throw new Error('Customer not found');
       }
 
-      // Verificar que todos los tags existen
-      // Los tags son globales y pueden ser utilizados por cualquier usuario.
       if (normalizedTagIds.length > 0) {
         const placeholders = normalizedTagIds
           .map(() => '?')
@@ -64,12 +66,13 @@ export class CustomerTagService {
           SELECT id
           FROM tags
           WHERE id IN (${placeholders})
+            AND (user_id IS NULL OR user_id = ?)
           `,
-          normalizedTagIds
+          [...normalizedTagIds, userIdNumber]
         );
 
         const existingTagIds = new Set(
-          tagRows.map((tag: any) => Number(tag.id))
+          tagRows.map((tag: any) => String(tag.id))
         );
 
         const invalidTagIds = normalizedTagIds.filter(
@@ -81,7 +84,6 @@ export class CustomerTagService {
         }
       }
 
-      // Reemplazar todas las asociaciones dentro de la misma transacción
       await connection.execute(
         `
         DELETE FROM customer_tags
@@ -90,7 +92,6 @@ export class CustomerTagService {
         [customerIdNumber]
       );
 
-      // Agregar los nuevos tags
       if (normalizedTagIds.length > 0) {
         const values = normalizedTagIds
           .map(() => '(?, ?)')
@@ -111,7 +112,6 @@ export class CustomerTagService {
         );
       }
 
-      // Obtener el cliente actualizado
       const [updatedCustomers]: any = await connection.execute(
         `
         SELECT
@@ -141,9 +141,11 @@ export class CustomerTagService {
       await connection.commit();
 
       return updatedCustomers[0] ?? null;
+
     } catch (error) {
       await connection.rollback();
       throw error;
+
     } finally {
       connection.release();
     }
@@ -165,31 +167,27 @@ export class CustomerTagService {
       throw new Error('Invalid customer or user ID');
     }
 
-    return new Promise(async (resolve, reject) => {
-      try {
-        const [rows]: any = await pool.execute(
-          `
-          SELECT
-            t.id,
-            t.name,
-            t.color,
-            t.description
-          FROM tags t
-          INNER JOIN customer_tags ct
-            ON t.id = ct.tag_id
-          INNER JOIN customers c
-            ON ct.customer_id = c.id
-          WHERE c.id = ?
-            AND c.user_id = ?
-          ORDER BY t.name ASC
-          `,
-          [customerIdNumber, userIdNumber]
-        );
+    const [rows]: any = await pool.execute(
+      `
+      SELECT
+        t.id,
+        t.name,
+        t.color,
+        t.description,
+        t.user_id
+      FROM tags t
+      INNER JOIN customer_tags ct
+        ON t.id = ct.tag_id
+      INNER JOIN customers c
+        ON ct.customer_id = c.id
+      WHERE c.id = ?
+        AND c.user_id = ?
+        AND (t.user_id IS NULL OR t.user_id = ?)
+      ORDER BY t.name ASC
+      `,
+      [customerIdNumber, userIdNumber, userIdNumber]
+    );
 
-        resolve(Array.isArray(rows) ? rows : []);
-      } catch (error) {
-        reject(error);
-      }
-    });
+    return Array.isArray(rows) ? rows : [];
   }
 }

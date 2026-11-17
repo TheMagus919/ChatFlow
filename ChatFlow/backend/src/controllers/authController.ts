@@ -336,11 +336,11 @@ export class AuthController {
 
 export const registerValidation = [
 
-  /*body('email')
+  body('email')
     .isEmail()
     .normalizeEmail()
     .withMessage('Email válido requerido'),
-*/
+
   body('password')
     .isString()
     .isLength({
@@ -365,14 +365,14 @@ export const registerValidation = [
 ];
 
 export const loginValidation = [
-/*
+
   body('email')
     .isEmail()
     .normalizeEmail()
     .withMessage(
       'Email válido requerido'
     ),
-*/
+
   body('password')
     .isString()
     .notEmpty()

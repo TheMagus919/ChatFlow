@@ -105,31 +105,15 @@ class AuthService {
         return userResult[0] || null;
     }
     async updateProfile(userId, data) {
-        const normalizedEmail = data.email.trim().toLowerCase();
         const normalizedName = data.name.trim();
-        const [existingUsers] = await database_1.default.execute(`
-      SELECT id
-      FROM users
-      WHERE email = ?
-        AND id <> ?
-      LIMIT 1
-      `, [
-            normalizedEmail,
-            userId
-        ]);
-        if (existingUsers.length > 0) {
-            throw new Error('El email ya está registrado');
-        }
         const [result] = await database_1.default.execute(`
       UPDATE users
       SET
         name = ?,
-        email = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
       `, [
             normalizedName,
-            normalizedEmail,
             userId
         ]);
         if (result.affectedRows === 0) {

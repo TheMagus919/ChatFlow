@@ -20,6 +20,6 @@ export const routes: Routes = [
   { path: 'conversations', component: ConversationsComponent, canActivate: [authGuard] },
   { path: 'customers', component: CustomerListComponent, canActivate: [authGuard] },
   { path: 'stats', component: StatisticsComponent, canActivate: [authGuard] },
-  { path: 'tags', component: TagsComponent, canActivate: [authGuard] },
+  { path: 'tags', component: PipelineComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '/' }
 ];

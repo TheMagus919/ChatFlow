@@ -14,12 +14,23 @@
 
     <nav class="menu">
 
-      <a routerLink="/pipeline" class="menu-item active">
+      <a routerLink="/pipeline" class="menu-item" [class.active]="!isTagsPage">
         <img [src]="'menuSeleccionado.png'" alt="Menu Principal" class="menu-icon">Menu Principal
       </a>
 
       <a routerLink="/customers" class="menu-item">
         <img [src]="'clientes.png'" alt="Clientes" class="menu-icon">Clientes
+      </a>
+
+      <a
+        *ngIf="currentUser.subscription === 'pro' || currentUser.subscription === 'business'"
+        routerLink="/tags"
+        class="menu-item"
+        [class.active]="isTagsPage">
+
+        <i class="bi bi-tags menu-icon"></i>
+        <span>Etiquetas</span>
+
       </a>
 
       <a routerLink="/stats" class="menu-item">
@@ -95,6 +106,9 @@
     <div class="dashboard-navbar">
 
       <div class="navbar-left">
+        <div class="account-name" *ngIf="currentUser.name">
+          {{ currentUser.name }}
+        </div>
       </div>
 
       <div class="navbar-right">
@@ -209,6 +223,7 @@
       </div>
 
     </div>
+    <ng-container *ngIf="!isTagsPage">
     <!-- TOPBAR -->
     <header class="topbar">
 
@@ -426,7 +441,8 @@
       </div>
 
     </section>
-
+    </ng-container>
+    <app-tags *ngIf="isTagsPage"></app-tags>
   </main>
 
 </div>
